@@ -1,26 +1,108 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf9f6;
+  --foreground: #1a1a2e;
+  --lego-red: #e3000b;
+  --lego-blue: #006db7;
+  --lego-yellow: #f5c400;
+  --lego-green: #00852b;
+  --lego-black: #1a1a2e;
+  --lego-white: #ffffff;
+  --lego-gray: #a0a5a8;
+  --lego-light: #f2f2f0;
+  --stud-size: 12px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-lego-red: var(--lego-red);
+  --color-lego-blue: var(--lego-blue);
+  --color-lego-yellow: var(--lego-yellow);
+  --color-lego-green: var(--lego-green);
+  --color-lego-black: var(--lego-black);
+  --color-lego-white: var(--lego-white);
+  --color-lego-gray: var(--lego-gray);
+  --color-lego-light: var(--lego-light);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* LEGO stud pattern for decorative elements */
+.lego-stud {
+  width: var(--stud-size);
+  height: var(--stud-size);
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* LEGO brick card style */
+.brick {
+  border-radius: 4px;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.brick:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Stud row on top of brick */
+.brick-studs {
+  display: flex;
+  gap: 8px;
+  padding: 0 12px;
+  position: absolute;
+  top: -6px;
+  left: 12px;
+}
+
+.brick-studs .stud {
+  width: 12px;
+  height: 6px;
+  border-radius: 6px 6px 0 0;
+  opacity: 0.7;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Section transitions */
+section {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+section:nth-child(2) { animation-delay: 0.1s; }
+section:nth-child(3) { animation-delay: 0.2s; }
+section:nth-child(4) { animation-delay: 0.3s; }
+section:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Timeline connector */
+.timeline-line {
+  position: absolute;
+  left: 19px;
+  top: 40px;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, var(--lego-blue), var(--lego-red));
+  border-radius: 2px;
 }
