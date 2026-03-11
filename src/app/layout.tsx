@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { ConsoleEasterEgg } from "@/components/ConsoleEasterEgg";
+import { TabTitle } from "@/components/TabTitle";
+import { AIEasterEgg } from "@/components/AIEasterEgg";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
@@ -31,6 +33,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ConsoleEasterEgg />
+        <TabTitle />
+        <AIEasterEgg />
         {children}
       </body>
     </html>
