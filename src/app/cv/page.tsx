@@ -118,7 +118,8 @@ export default function CV() {
             <li>
               Started with a regulatory RAG chatbot, then evolved it into a
               generic plug-and-play platform where any team could create their
-              own AI assistant from PDFs, webpages, and other resources — with
+              own AI assistant from PDFs, webpages, and other resources — built
+              on OpenSearch for retrieval, Langfuse for observability, with
               integrations for Slack, Zendesk, and a standalone API
             </li>
             <li>
