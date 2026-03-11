@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const links = [
   { href: "#experience", label: "Experience" },
@@ -10,19 +10,42 @@ const links = [
 
 export function Nav() {
   const [open, setOpen] = useState(false);
+  const [clicks, setClicks] = useState(0);
+  const [fallen, setFallen] = useState(false);
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleLogoClick(e: React.MouseEvent) {
+    e.preventDefault();
+    if (fallen) return;
+
+    const next = clicks + 1;
+    setClicks(next);
+
+    // Reset click count after 2s of no clicking
+    if (clickTimer.current) clearTimeout(clickTimer.current);
+    clickTimer.current = setTimeout(() => setClicks(0), 2000);
+
+    if (next >= 7) {
+      setFallen(true);
+      setTimeout(() => setFallen(false), 3000);
+      setClicks(0);
+    }
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-lego-black/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Logo — LEGO brick style */}
-        <a href="#" className="flex items-center gap-2">
-          <div className="flex gap-1">
+        <a href="#" className="flex items-center gap-2" onClick={handleLogoClick}>
+          <div className={`flex gap-1 transition-transform duration-500 ${fallen ? "translate-y-1 -rotate-12" : ""}`}>
             <div className="h-3 w-3 rounded-full bg-lego-red" />
             <div className="h-3 w-3 rounded-full bg-lego-yellow" />
             <div className="h-3 w-3 rounded-full bg-lego-blue" />
             <div className="h-3 w-3 rounded-full bg-lego-green" />
           </div>
-          <span className="ml-1 text-lg font-bold tracking-tight text-white">
+          <span
+            className={`ml-1 text-lg font-bold tracking-tight text-white transition-all duration-700 ${fallen ? "translate-y-16 rotate-[30deg] opacity-0" : ""}`}
+          >
             JS
           </span>
         </a>
