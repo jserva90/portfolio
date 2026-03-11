@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   title: "Joosep Serva — AI Engineer & Software Developer",
   description:
     "Applied AI Engineer based in Tallinn, Estonia. Building intelligent systems with AWS, Python, LangChain, and more.",
+  verification: {
+    google: "ZOkMfm-lItmlsaAoo-wEmc3p-qYI3Obru-k17cWA2JI",
+  },
 };
 
 export default function RootLayout({
