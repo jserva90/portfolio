@@ -23,7 +23,7 @@ export function Hero() {
         </div>
 
         <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-lego-yellow">
-          Software Engineer &middot; AI Practitioner
+          Software Engineer building AI systems
         </p>
 
         <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight text-white md:text-7xl">
