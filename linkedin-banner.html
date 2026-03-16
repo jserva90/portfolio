@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LinkedIn Banner</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .banner {
+    width: 100vw;
+    height: 100vh;
+    background: #1a1a2e;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5%;
+  }
+
+  /* Subtle stud grid background */
+  .banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1.5px, transparent 1.5px);
+    background-size: 32px 32px;
+  }
+
+  /* Color bar top */
+  .top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    display: flex;
+  }
+  .top-bar div { flex: 1; }
+
+  /* Color blocks accent */
+  .blocks {
+    position: absolute;
+    bottom: 12%;
+    right: 5%;
+    display: flex;
+    gap: 6px;
+  }
+  .blocks div {
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  /* Right side decorative bricks */
+  .deco-bricks {
+    position: absolute;
+    left: 5%;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    opacity: 0.15;
+  }
+  .deco-brick {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    height: 32px;
+    border-radius: 3px;
+  }
+  .deco-stud {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    color: #f5c400;
+    margin-bottom: 16px;
+  }
+
+  .name {
+    font-size: 72px;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -2px;
+    line-height: 1.1;
+  }
+
+  .info {
+    margin-top: 16px;
+    font-size: 14px;
+    color: #666;
+  }
+</style>
+</head>
+<body>
+  <div class="banner">
+    <!-- Top color bar -->
+    <div class="top-bar">
+      <div style="background:#e3000b"></div>
+      <div style="background:#006db7"></div>
+      <div style="background:#f5c400"></div>
+      <div style="background:#00852b"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="subtitle">Software Engineer &middot; AI Practitioner</div>
+      <div class="name">Joosep Serva</div>
+      <div class="info">
+        <span>Tallinn, Estonia</span>
+      </div>
+    </div>
+
+    <!-- Decorative bricks right side -->
+    <div class="deco-bricks">
+      <div class="deco-brick" style="width:160px;background:#e3000b">
+        <div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div>
+      </div>
+      <div class="deco-brick" style="width:200px;background:#006db7">
+        <div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div>
+      </div>
+      <div class="deco-brick" style="width:240px;background:#f5c400">
+        <div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div>
+      </div>
+      <div class="deco-brick" style="width:200px;background:#00852b">
+        <div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div>
+      </div>
+      <div class="deco-brick" style="width:160px;background:#e3000b">
+        <div class="deco-stud"></div><div class="deco-stud"></div><div class="deco-stud"></div>
+      </div>
+    </div>
+
+    <!-- Bottom accent blocks -->
+    <div class="blocks">
+      <div style="width:48px;background:#e3000b"></div>
+      <div style="width:32px;background:#f5c400"></div>
+      <div style="width:64px;background:#006db7"></div>
+      <div style="width:24px;background:#00852b"></div>
+    </div>
+  </div>
+</body>
+</html>
