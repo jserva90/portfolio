@@ -2,9 +2,18 @@ import { SectionHeader } from "./SectionHeader";
 
 const testimonials = [
   {
+    name: "Vladislav Šikirjavõi",
+    role: "CTO @ Avokaado",
+    color: "bg-lego-blue",
+    linkedin: "https://www.linkedin.com/in/vladislav-sikirjavoi/",
+    quote:
+      "I worked with Joosep and really appreciated how reliable and easy he is to work with. He takes ownership, learns quickly, and doesn't need much hand-holding to get things done. He's someone you can trust with complex tasks and know they'll be handled thoughtfully from start to finish. He's especially strong when things are ambiguous or challenging. I'd gladly work with him again.",
+  },
+  {
     name: "Egon Saks",
     role: "Product Engineer @ Inbank",
-    color: "bg-lego-blue",
+    color: "bg-lego-yellow",
+    linkedin: "https://www.linkedin.com/in/egonsaks/",
     quote:
       "Joosep is brilliant and gifted software engineer! He has strong understanding of the core fundamentals and can move between tech stacks with ease. His ability to understand different concepts and break them down to smaller actionable tasks and execute on it is truly inspiring. He was one of the top students over 2 batches, 500+ students and graduated the 2 years program with less than 8 months which is remarkable. He is for sure an asset to any company!",
   },
@@ -12,6 +21,7 @@ const testimonials = [
     name: "Taivo Pikkmets",
     role: "Site Reliability Engineer @ Entigo",
     color: "bg-lego-green",
+    linkedin: "https://www.linkedin.com/in/taivo-pikkmets/",
     quote:
       "Joosep consistently demonstrated dedication and drive making him a valuable teammate. His ability to grasp new concepts swiftly, sometimes in hours compared to my days or weeks, was impressive. I can confidently say that my progress during our studies owes much to Joosep. His commitment, willingness to work hard, and natural problem-solving skills make him an outstanding teammate.",
   },
@@ -48,7 +58,12 @@ export function Testimonials() {
                 {t.quote}
               </p>
 
-              <div className="flex items-center gap-3">
+              <a
+                href={t.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-3"
+              >
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full ${t.color} text-sm font-bold text-white`}
                 >
@@ -61,7 +76,7 @@ export function Testimonials() {
                   <p className="text-sm font-bold text-foreground">{t.name}</p>
                   <p className="text-xs text-foreground/50">{t.role}</p>
                 </div>
-              </div>
+              </a>
             </div>
           ))}
         </div>

@@ -22,8 +22,8 @@ export function Contact() {
               I&apos;m easy to talk to. Drop me a message and let&apos;s see if
               there&apos;s a fit.
             </p>
-            <p className="mb-8 rounded-sm bg-white/10 px-4 py-3 text-sm text-lego-yellow">
-              Available from April 2026
+            <p className="mb-8 rounded-sm bg-white/10 px-4 py-3 text-sm text-lego-green">
+              Available
             </p>
 
             <div className="space-y-4">

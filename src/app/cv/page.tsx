@@ -34,8 +34,8 @@ export default function CV() {
             <h1 className="text-3xl font-extrabold tracking-tight">
               Joosep Serva
             </h1>
-            <span className="rounded-sm bg-[#f5c400] px-3 py-1 text-xs font-bold text-[#1a1a2e]">
-              Available from April 2026
+            <span className="rounded-sm bg-[#00852b] px-3 py-1 text-xs font-bold text-[#1a1a2e]">
+              Available
             </span>
           </div>
           <p className="mt-1 text-base text-gray-600">
@@ -95,8 +95,8 @@ export default function CV() {
             </li>
             <li>
               Designed a multi-stage processing pipeline — extracting document
-              structure, building data models, and generating business logic
-              and decision rules from PDFs and DOCX
+              structure, building data models, and generating business logic and
+              decision rules from PDFs and DOCX
             </li>
             <li>
               Built stateful AI agents with LangGraph for contract editing and
@@ -124,8 +124,8 @@ export default function CV() {
             </li>
             <li>
               The scalable architecture made it trivial to spin up new bots —
-              the insurance team&apos;s &ldquo;Kindlustusguru&rdquo; was set up with
-              minimal effort and won Project of the Year at LHV Summer Days
+              the insurance team&apos;s &ldquo;Kindlustusguru&rdquo; was set up
+              with minimal effort and won Project of the Year at LHV Summer Days
             </li>
             <li>
               Created a Slack-integrated incident routing app that uses AI to
@@ -147,8 +147,8 @@ export default function CV() {
             location="Tallinn, On-site"
           >
             <li>
-              Java development in a consultancy setting with extreme
-              programming and pair programming practices
+              Java development in a consultancy setting with extreme programming
+              and pair programming practices
             </li>
           </Entry>
 
