@@ -1,4 +1,6 @@
 import { SectionHeader } from "./SectionHeader";
+import { Reveal } from "./Reveal";
+import { TiltCard } from "./TiltCard";
 
 const testimonials = [
   {
@@ -31,11 +33,14 @@ export function Testimonials() {
   return (
     <section className="bg-background px-6 py-24">
       <div className="mx-auto max-w-6xl">
-        <SectionHeader title="What People Say" color="bg-lego-green" />
+        <Reveal>
+          <SectionHeader title="What People Say" color="bg-lego-green" />
+        </Reveal>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">
           {testimonials.map((t, i) => (
-            <div key={i} className="brick rounded-sm bg-white p-6 shadow-md">
+            <Reveal key={i} delay={(i % 2) * 0.1} className="h-full">
+              <TiltCard className="brick h-full rounded-sm bg-white p-6 shadow-md">
               <div className="brick-studs">
                 <div className={`stud ${t.color}`} />
                 <div className={`stud ${t.color}`} />
@@ -77,7 +82,8 @@ export function Testimonials() {
                   <p className="text-xs text-foreground/50">{t.role}</p>
                 </div>
               </a>
-            </div>
+              </TiltCard>
+            </Reveal>
           ))}
         </div>
       </div>

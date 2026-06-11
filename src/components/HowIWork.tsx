@@ -1,18 +1,23 @@
+import { Reveal } from "./Reveal";
+import { TiltCard } from "./TiltCard";
+
 export function HowIWork() {
   return (
     <section className="bg-lego-black px-6 py-24">
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-center gap-4">
-          <div className="h-8 w-3 rounded-sm bg-lego-yellow" />
-          <h2 className="text-3xl font-extrabold tracking-tight text-white">
-            How I Work
-          </h2>
-        </div>
+        <Reveal>
+          <div className="flex items-center gap-4">
+            <div className="h-8 w-3 rounded-sm bg-lego-yellow" />
+            <h2 className="text-3xl font-extrabold tracking-tight text-white">
+              How I Work
+            </h2>
+          </div>
 
-        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-lego-gray">
-          I&apos;ve learned what kind of environment brings out my best work.
-          Here&apos;s what I care about:
-        </p>
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-lego-gray">
+            I&apos;ve learned what kind of environment brings out my best work.
+            Here&apos;s what I care about:
+          </p>
+        </Reveal>
 
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           <ValueCard
@@ -46,14 +51,16 @@ function ValueCard({
   description: string;
 }) {
   return (
-    <div className="brick rounded-sm bg-white/5 p-6">
-      <div className="brick-studs">
-        <div className={`stud ${color}`} />
-        <div className={`stud ${color}`} />
-      </div>
-      <div className={`mb-4 h-1 w-12 rounded-full ${color}`} />
-      <h3 className="mb-3 text-lg font-bold text-white">{title}</h3>
-      <p className="text-sm leading-relaxed text-lego-gray">{description}</p>
-    </div>
+    <Reveal className="h-full">
+      <TiltCard className="brick h-full rounded-sm bg-white/5 p-6">
+        <div className="brick-studs">
+          <div className={`stud ${color}`} />
+          <div className={`stud ${color}`} />
+        </div>
+        <div className={`mb-4 h-1 w-12 rounded-full ${color}`} />
+        <h3 className="mb-3 text-lg font-bold text-white">{title}</h3>
+        <p className="text-sm leading-relaxed text-lego-gray">{description}</p>
+      </TiltCard>
+    </Reveal>
   );
 }

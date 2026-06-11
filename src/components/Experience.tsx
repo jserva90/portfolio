@@ -1,4 +1,5 @@
 import { SectionHeader } from "./SectionHeader";
+import { Reveal } from "./Reveal";
 
 const experiences = [
   {
@@ -68,14 +69,16 @@ export function Experience() {
   return (
     <section id="experience" className="bg-background px-6 py-24">
       <div className="mx-auto max-w-6xl">
-        <SectionHeader title="Experience" color="bg-lego-red" />
+        <Reveal>
+          <SectionHeader title="Experience" color="bg-lego-red" />
+        </Reveal>
 
         <div className="relative mt-12 space-y-12 pl-10">
           {/* Timeline line */}
           <div className="timeline-line" />
 
           {experiences.map((exp, i) => (
-            <div key={i} className="relative">
+            <Reveal key={i} delay={0.05} className="relative">
               {/* Timeline dot */}
               <div
                 className={`absolute -left-10 top-1 h-10 w-10 rounded-sm ${exp.dotColor} flex items-center justify-center shadow-md`}
@@ -99,7 +102,7 @@ export function Experience() {
                       {exp.company}
                     </p>
                   </div>
-                  <span className="rounded-sm bg-lego-light px-3 py-1 text-xs font-bold uppercase tracking-wider text-foreground/50">
+                  <span className="rounded-sm bg-lego-light px-3 py-1 font-mono text-xs font-medium uppercase tracking-wider text-foreground/50">
                     {exp.period}
                   </span>
                 </div>
@@ -121,14 +124,14 @@ export function Experience() {
                   {exp.tech.map((t) => (
                     <span
                       key={t}
-                      className="rounded-sm bg-lego-light px-2 py-1 text-xs font-semibold text-foreground/60"
+                      className="rounded-sm bg-lego-light px-2 py-1 font-mono text-xs font-medium text-foreground/60"
                     >
                       {t}
                     </span>
                   ))}
                 </div>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>

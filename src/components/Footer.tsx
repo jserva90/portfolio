@@ -14,7 +14,12 @@ export function Footer() {
           </span>
         </div>
         <p className="text-xs text-lego-gray/60">
-          Built brick by brick with Next.js
+          Built brick by brick with Next.js · press{" "}
+          <kbd className="rounded-sm bg-white/10 px-1 py-0.5 font-mono font-bold">
+            ⌘K
+          </kbd>{" "}
+          or type{" "}
+          <span className="font-semibold text-lego-yellow/70">lego</span>
         </p>
       </div>
     </footer>

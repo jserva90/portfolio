@@ -1,18 +1,38 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const links = [
-  { href: "#experience", label: "Experience" },
-  { href: "#education", label: "Education" },
-  { href: "#contact", label: "Contact" },
+  { href: "#experience", id: "experience", label: "Experience", color: "bg-lego-red" },
+  { href: "#work", id: "work", label: "Work", color: "bg-lego-yellow" },
+  { href: "#education", id: "education", label: "Education", color: "bg-lego-blue" },
+  { href: "#contact", id: "contact", label: "Contact", color: "bg-lego-green" },
 ];
 
 export function Nav() {
   const [open, setOpen] = useState(false);
+  const [active, setActive] = useState("");
   const [clicks, setClicks] = useState(0);
   const [fallen, setFallen] = useState(false);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Scrollspy: highlight the section currently in the middle of the viewport.
+  useEffect(() => {
+    const sections = links
+      .map((l) => document.getElementById(l.id))
+      .filter((el): el is HTMLElement => el !== null);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActive(entry.target.id);
+        }
+      },
+      { rootMargin: "-35% 0px -55% 0px" },
+    );
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, []);
 
   function handleLogoClick(e: React.MouseEvent) {
     e.preventDefault();
@@ -44,23 +64,38 @@ export function Nav() {
             <div className="h-3 w-3 rounded-full bg-lego-green" />
           </div>
           <span
-            className={`ml-1 text-lg font-bold tracking-tight text-white transition-all duration-700 ${fallen ? "translate-y-16 rotate-[30deg] opacity-0" : ""}`}
+            className={`font-display ml-1 text-lg font-bold tracking-tight text-white transition-all duration-700 ${fallen ? "translate-y-16 rotate-[30deg] opacity-0" : ""}`}
           >
             JS
           </span>
         </a>
 
         {/* Desktop links */}
-        <div className="hidden gap-8 md:flex">
+        <div className="hidden items-center gap-8 md:flex">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="text-sm font-medium text-lego-gray transition-colors hover:text-white"
+              className={`group relative text-sm font-medium transition-colors ${
+                active === l.id ? "text-white" : "text-lego-gray hover:text-white"
+              }`}
             >
               {l.label}
+              <span
+                className={`absolute -bottom-1.5 left-0 h-[3px] rounded-full transition-all duration-300 ${l.color} ${
+                  active === l.id ? "w-full" : "w-0 group-hover:w-1/3"
+                }`}
+              />
             </a>
           ))}
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent("lego:palette"))}
+            className="flex items-center gap-1.5 rounded-sm border border-white/15 px-2.5 py-1.5 text-xs font-semibold text-lego-gray transition-colors hover:border-white/40 hover:text-white"
+            aria-label="Open command palette"
+          >
+            <kbd className="font-mono">⌘</kbd>
+            <kbd className="font-mono">K</kbd>
+          </button>
         </div>
 
         {/* Mobile toggle */}
@@ -89,8 +124,11 @@ export function Nav() {
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
-              className="block py-2 text-sm font-medium text-lego-gray transition-colors hover:text-white"
+              className={`flex items-center gap-3 py-2 text-sm font-medium transition-colors ${
+                active === l.id ? "text-white" : "text-lego-gray hover:text-white"
+              }`}
             >
+              <span className={`h-2 w-2 rounded-[2px] ${l.color}`} />
               {l.label}
             </a>
           ))}

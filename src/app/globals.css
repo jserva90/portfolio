@@ -25,14 +25,59 @@
   --color-lego-white: var(--lego-white);
   --color-lego-gray: var(--lego-gray);
   --color-lego-light: var(--lego-light);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-jetbrains);
+  --font-display: var(--font-bricolage);
 }
 
+/* Note: --font-sans/--font-display from `@theme inline` exist only inside
+   Tailwind utilities, so plain CSS here references the next/font variables
+   (--font-manrope, --font-bricolage) directly. */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-manrope), Arial, Helvetica, sans-serif;
+}
+
+/* Display face for headings and anything opting in via .font-display.
+   Bricolage carries the brand voice; body copy stays in Manrope. */
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: var(--font-bricolage), var(--font-manrope), sans-serif;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: var(--lego-yellow);
+  color: var(--lego-black);
+}
+
+:focus-visible {
+  outline: 2px solid var(--lego-blue);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar (WebKit) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--lego-light);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--lego-gray);
+  border-radius: 5px;
+  border: 2px solid var(--lego-light);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--lego-black);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 /* LEGO stud pattern for decorative elements */
@@ -72,30 +117,6 @@ body {
   opacity: 0.7;
 }
 
-/* Smooth scroll */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Section transitions */
-section {
-  opacity: 0;
-  transform: translateY(20px);
-  animation: fadeInUp 0.6s ease forwards;
-}
-
-section:nth-child(2) { animation-delay: 0.1s; }
-section:nth-child(3) { animation-delay: 0.2s; }
-section:nth-child(4) { animation-delay: 0.3s; }
-section:nth-child(5) { animation-delay: 0.4s; }
-
-@keyframes fadeInUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Timeline connector */
 .timeline-line {
   position: absolute;
@@ -105,4 +126,203 @@ section:nth-child(5) { animation-delay: 0.4s; }
   width: 3px;
   background: linear-gradient(to bottom, var(--lego-blue), var(--lego-red));
   border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------- */
+/* Scroll reveal                                                     */
+/* ---------------------------------------------------------------- */
+
+/* Animation-based (not transition-based) so it can coexist with .brick's
+   hover transition on the same element. `backwards` holds the hidden frame
+   through any stagger delay. */
+.reveal {
+  opacity: 0;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  animation: reveal-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Hero: name letters snap into place like bricks                    */
+/* ---------------------------------------------------------------- */
+
+.brick-letter {
+  display: inline-block;
+  opacity: 0;
+  animation: brick-snap 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes brick-snap {
+  0% {
+    opacity: 0;
+    transform: translateY(-70px) rotate(-6deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(6px) rotate(2deg);
+  }
+  80% {
+    transform: translateY(-2px) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Rotating word flip */
+.word-flip {
+  animation: word-flip-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes word-flip-in {
+  from {
+    opacity: 0;
+    transform: translateY(110%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Scroll-down indicator */
+.scroll-hint {
+  animation: scroll-bounce 2.2s ease-in-out infinite;
+}
+
+@keyframes scroll-bounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* 3D tilt cards                                                     */
+/* ---------------------------------------------------------------- */
+
+/* The :hover selector matches .brick:hover's specificity so the tilt
+   transform wins on cards that carry both classes. */
+.tilt-card,
+.tilt-card:hover {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --sheen-x: 50%;
+  --sheen-y: 50%;
+  --sheen-o: 0;
+  position: relative;
+  transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transition: transform 0.15s ease-out, box-shadow 0.2s ease;
+  will-change: transform;
+}
+
+.tilt-card:not(:hover) {
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+}
+
+.tilt-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--sheen-o);
+  transition: opacity 0.3s ease;
+  background: radial-gradient(
+    420px circle at var(--sheen-x) var(--sheen-y),
+    rgba(255, 255, 255, 0.22),
+    transparent 65%
+  );
+}
+
+/* ---------------------------------------------------------------- */
+/* Command palette                                                   */
+/* ---------------------------------------------------------------- */
+
+.palette-pop {
+  animation: palette-pop 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes palette-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Pulsing availability dot */
+.pulse-dot {
+  position: relative;
+}
+
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Reduced motion: everything settles instantly                      */
+/* ---------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .reveal {
+    opacity: 1;
+  }
+
+  .reveal.is-visible {
+    animation: none;
+  }
+
+  .brick-letter {
+    opacity: 1;
+    animation: none;
+  }
+
+  .word-flip,
+  .scroll-hint,
+  .palette-pop,
+  .pulse-dot::after {
+    animation: none;
+  }
+
+  .tilt-card,
+  .tilt-card:hover {
+    transform: none;
+  }
 }

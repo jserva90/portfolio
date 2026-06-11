@@ -2,17 +2,27 @@ import type { Metadata } from "next";
 import { ConsoleEasterEgg } from "@/components/ConsoleEasterEgg";
 import { TabTitle } from "@/components/TabTitle";
 import { AIEasterEgg } from "@/components/AIEasterEgg";
-import { Geist, Geist_Mono } from "next/font/google";
+import { ScrollProgress } from "@/components/ScrollProgress";
+import { CommandPalette } from "@/components/CommandPalette";
+import { BuildMode } from "@/components/BuildMode";
+import { Bricolage_Grotesque, Manrope, JetBrains_Mono } from "next/font/google";
 
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Brand type system: Bricolage Grotesque (display — "bricolage" = building
+// from the parts at hand), Manrope (body), JetBrains Mono (engineer accents).
+const displayFont = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const sansFont = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin"],
+});
+
+const monoFont = JetBrains_Mono({
+  variable: "--font-jetbrains",
   subsets: ["latin"],
 });
 
@@ -33,11 +43,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${displayFont.variable} ${sansFont.variable} ${monoFont.variable} antialiased`}
       >
         <ConsoleEasterEgg />
         <TabTitle />
         <AIEasterEgg />
+        <ScrollProgress />
+        <CommandPalette />
+        <BuildMode />
         {children}
       </body>
     </html>

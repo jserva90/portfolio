@@ -1,14 +1,18 @@
 import { SectionHeader } from "./SectionHeader";
+import { Reveal } from "./Reveal";
+import { Counter } from "./Counter";
 
 export function Education() {
   return (
     <section id="education" className="bg-lego-light px-6 py-24">
       <div className="mx-auto max-w-6xl">
-        <SectionHeader title="Education" color="bg-lego-blue" />
+        <Reveal>
+          <SectionHeader title="Education" color="bg-lego-blue" />
+        </Reveal>
 
         <div className="mt-12 space-y-6">
           {/* kood/Jõhvi */}
-          <div className="brick bg-white p-8 shadow-md">
+          <Reveal className="brick bg-white p-8 shadow-md">
             <div className="brick-studs">
               <div className="stud bg-lego-blue" />
               <div className="stud bg-lego-blue" />
@@ -20,7 +24,7 @@ export function Education() {
                 <h3 className="text-2xl font-bold text-foreground">
                   kood/Jõhvi
                 </h3>
-                <p className="mt-1 text-sm font-semibold text-foreground/60">
+                <p className="mt-1 font-mono text-sm font-medium text-foreground/60">
                   Computer Programming &middot; 2022 — 2023
                 </p>
                 <p className="mt-4 text-foreground/70">
@@ -45,16 +49,16 @@ export function Education() {
 
               <div className="flex shrink-0 gap-4 md:flex-col md:gap-3">
                 <div className="rounded-sm bg-lego-yellow px-5 py-4 text-center shadow-sm">
-                  <p className="text-2xl font-extrabold text-foreground">
-                    Top 5%
+                  <p className="font-display text-2xl font-extrabold text-foreground">
+                    Top <Counter to={5} suffix="%" />
                   </p>
                   <p className="text-xs font-semibold text-foreground/60">
-                    of 500+ students
+                    of <Counter to={500} suffix="+" duration={1500} /> students
                   </p>
                 </div>
                 <div className="rounded-sm bg-lego-red px-5 py-4 text-center shadow-sm">
-                  <p className="text-2xl font-extrabold text-white">
-                    &lt; 8 mo
+                  <p className="font-display text-2xl font-extrabold text-white">
+                    &lt; <Counter to={8} suffix=" mo" />
                   </p>
                   <p className="text-xs font-semibold text-white/70">
                     completed 2yr program
@@ -62,11 +66,11 @@ export function Education() {
                 </div>
               </div>
             </div>
-          </div>
+          </Reveal>
 
           {/* The interesting backstory */}
           <div className="grid gap-6 md:grid-cols-3">
-            <div className="brick bg-white p-6 shadow-md">
+            <Reveal className="brick bg-white p-6 shadow-md">
               <div className="brick-studs">
                 <div className="stud bg-lego-green" />
                 <div className="stud bg-lego-green" />
@@ -74,7 +78,7 @@ export function Education() {
               <h3 className="text-lg font-bold text-foreground">
                 Music &amp; Theatre Academy
               </h3>
-              <p className="mt-1 text-sm text-foreground/60">
+              <p className="mt-1 font-mono text-sm text-foreground/60">
                 BA, Horn &middot; 2019 — 2022
               </p>
               <p className="mt-3 text-sm text-foreground/50">
@@ -83,15 +87,15 @@ export function Education() {
                 training teaches you discipline, precision, and how to perform
                 under pressure — all useful in engineering.
               </p>
-            </div>
+            </Reveal>
 
-            <div className="brick bg-white p-6 shadow-md">
+            <Reveal delay={0.1} className="brick bg-white p-6 shadow-md">
               <div className="brick-studs">
                 <div className="stud bg-lego-yellow" />
                 <div className="stud bg-lego-yellow" />
               </div>
               <h3 className="text-lg font-bold text-foreground">Psychology</h3>
-              <p className="mt-1 text-sm text-foreground/60">
+              <p className="mt-1 font-mono text-sm text-foreground/60">
                 BSc, Clinical &middot; 2010 — 2014
               </p>
               <p className="mt-3 text-sm text-foreground/50">
@@ -99,9 +103,9 @@ export function Education() {
                 asking &ldquo;what does the user actually need?&rdquo; before
                 jumping to solutions. I still use this every day.
               </p>
-            </div>
+            </Reveal>
 
-            <div className="brick bg-white p-6 shadow-md">
+            <Reveal delay={0.2} className="brick bg-white p-6 shadow-md">
               <div className="brick-studs">
                 <div className="stud bg-lego-red" />
                 <div className="stud bg-lego-red" />
@@ -124,7 +128,7 @@ export function Education() {
                   </div>
                 ))}
               </div>
-            </div>
+            </Reveal>
           </div>
         </div>
       </div>

@@ -1,4 +1,6 @@
 import { SectionHeader } from "./SectionHeader";
+import { Reveal } from "./Reveal";
+import { TiltCard } from "./TiltCard";
 
 const projects = [
   {
@@ -48,11 +50,14 @@ export function SelectedWork() {
   return (
     <section id="work" className="bg-background px-6 py-24">
       <div className="mx-auto max-w-6xl">
-        <SectionHeader title="Selected Work" color="bg-lego-yellow" />
+        <Reveal>
+          <SectionHeader title="Selected Work" color="bg-lego-yellow" />
+        </Reveal>
 
         <div className="mt-12 grid gap-8 md:grid-cols-3">
-          {projects.map((project) => (
-            <div key={project.title} className="brick bg-white p-6 shadow-md">
+          {projects.map((project, i) => (
+            <Reveal key={project.title} delay={i * 0.1}>
+              <TiltCard className="brick h-full bg-white p-6 shadow-md">
               <div className="brick-studs">
                 <div className={`stud ${project.color}`} />
                 <div className={`stud ${project.color}`} />
@@ -75,13 +80,14 @@ export function SelectedWork() {
                 {project.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-sm bg-lego-light px-2 py-1 text-xs font-semibold text-foreground/60"
+                    className="rounded-sm bg-lego-light px-2 py-1 font-mono text-xs font-medium text-foreground/60"
                   >
                     {tag}
                   </span>
                 ))}
-              </div>
-            </div>
+                </div>
+              </TiltCard>
+            </Reveal>
           ))}
         </div>
       </div>
