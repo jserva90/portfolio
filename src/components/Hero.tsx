@@ -2,6 +2,7 @@ import { BrickField } from "./BrickField";
 import { BrickSculpture } from "./BrickSculpture";
 import { Magnetic } from "./Magnetic";
 import { RotatingWord } from "./RotatingWord";
+import { HIDE_HERO_BRICK_DROP } from "@/lib/flags";
 
 const NAME = "Joosep";
 
@@ -101,7 +102,9 @@ export function Hero() {
           </div>
 
           <p className="mt-16 text-xs text-lego-gray/50">
-            Psst — click anywhere to drop a brick, or press{" "}
+            Psst —{" "}
+            {!HIDE_HERO_BRICK_DROP && <>click anywhere to drop a brick, or </>}
+            press{" "}
             <kbd className="rounded-sm bg-white/10 px-1.5 py-0.5 font-mono font-bold text-lego-gray">
               ⌘K
             </kbd>{" "}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { HIDE_BUILD_MODE } from "@/lib/flags";
 
 type Command = {
   id: string;
@@ -22,7 +23,7 @@ function buildCommands(close: () => void, copyEmail: () => void): Command[] {
     close();
     window.open(url, "_blank", "noopener,noreferrer");
   };
-  return [
+  const all: Command[] = [
     { id: "experience", label: "Go to Experience", group: "Navigate", keywords: "work jobs avokaado lhv career", color: "bg-lego-red", run: go("experience") },
     { id: "work", label: "Go to Selected Work", group: "Navigate", keywords: "projects rag pipeline portfolio", color: "bg-lego-yellow", run: go("work") },
     { id: "education", label: "Go to Education", group: "Navigate", keywords: "school kood johvi music psychology", color: "bg-lego-blue", run: go("education") },
@@ -67,6 +68,12 @@ function buildCommands(close: () => void, copyEmail: () => void): Command[] {
       },
     },
   ];
+  // "hype" (ThoughtLeaderAI) is kept in code but excluded from the menu by
+  // request; "bricks" (build mode) is hidden behind its flag. Both stay
+  // defined above so they can be re-enabled without rewriting anything.
+  return all.filter(
+    (c) => c.id !== "hype" && !(HIDE_BUILD_MODE && c.id === "bricks"),
+  );
 }
 
 export function CommandPalette() {

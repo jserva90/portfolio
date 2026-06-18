@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Brick, PileGrid, drawBrick, makeBrick, stepBricks } from "@/lib/lego";
+import { HIDE_BUILD_MODE } from "@/lib/flags";
 
 const TYPED_TRIGGER = "lego";
 const RAIN_INTERVAL = 160;
@@ -18,6 +19,9 @@ export function BuildMode() {
 
   // Activation: typed trigger + custom event from the palette.
   useEffect(() => {
+    // Disabled by default — neither typing "lego" nor the ⌘K command can
+    // start build mode, so it stays hidden from the site.
+    if (HIDE_BUILD_MODE) return;
     let buffer = "";
     function onKey(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;

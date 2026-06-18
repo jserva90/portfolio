@@ -1,3 +1,5 @@
+import { HIDE_BUILD_MODE } from "@/lib/flags";
+
 export function Footer() {
   return (
     <footer className="border-t border-white/10 bg-lego-black px-6 py-8">
@@ -17,9 +19,14 @@ export function Footer() {
           Built brick by brick with Next.js · press{" "}
           <kbd className="rounded-sm bg-white/10 px-1 py-0.5 font-mono font-bold">
             ⌘K
-          </kbd>{" "}
-          or type{" "}
-          <span className="font-semibold text-lego-yellow/70">lego</span>
+          </kbd>
+          {!HIDE_BUILD_MODE && (
+            <>
+              {" "}
+              or type{" "}
+              <span className="font-semibold text-lego-yellow/70">lego</span>
+            </>
+          )}
         </p>
       </div>
     </footer>

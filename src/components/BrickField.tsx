@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Brick, PileGrid, drawBrick, makeBrick, stepBricks } from "@/lib/lego";
+import { HIDE_HERO_BRICK_DROP } from "@/lib/flags";
 
 type Ripple = { x: number; y: number; born: number };
 
@@ -121,6 +122,8 @@ export function BrickField() {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       ripples.push({ x, y, born: performance.now() });
+      // Brick dropping is gated off by default (the click still ripples).
+      if (HIDE_HERO_BRICK_DROP) return;
       // Don't let the wall swallow the whole hero.
       if (bricks.length >= MAX_BRICKS || pile.maxHeight() > height * 0.45) {
         bricks = [];
