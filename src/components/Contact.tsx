@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Reveal } from "./Reveal";
+import { SEEKING_JOB } from "@/lib/flags";
 
 export function Contact() {
   return (
@@ -27,10 +28,12 @@ export function Contact() {
               I&apos;m easy to talk to. Drop me a message and let&apos;s see if
               there&apos;s a fit.
             </p>
-            <p className="mb-8 inline-flex items-center gap-2.5 rounded-sm bg-white/10 px-4 py-3 text-sm font-semibold text-lego-green">
-              <span className="pulse-dot inline-block h-2.5 w-2.5 rounded-full bg-lego-green" />
-              Available for new opportunities
-            </p>
+            {SEEKING_JOB && (
+              <p className="mb-8 inline-flex items-center gap-2.5 rounded-sm bg-white/10 px-4 py-3 text-sm font-semibold text-lego-green">
+                <span className="pulse-dot inline-block h-2.5 w-2.5 rounded-full bg-lego-green" />
+                Available for new opportunities
+              </p>
+            )}
 
             <div className="space-y-4">
               <ContactLink

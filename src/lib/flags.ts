@@ -14,3 +14,10 @@ export const HIDE_HERO_BRICK_DROP = true;
  * ⌘K "Make it rain bricks" command.
  */
 export const HIDE_BUILD_MODE = true;
+
+/**
+ * Whether I'm currently open to new roles. When `false`, the "Available"
+ * badges (on the contact section and the CV) are hidden — flip to `true`
+ * if I'm job-seeking again.
+ */
+export const SEEKING_JOB = false;

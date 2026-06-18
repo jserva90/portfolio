@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PrintButton } from "@/components/PrintButton";
+import { SEEKING_JOB } from "@/lib/flags";
 
 export const metadata: Metadata = {
   title: "Joosep Serva — CV",
@@ -34,9 +35,11 @@ export default function CV() {
             <h1 className="text-3xl font-extrabold tracking-tight">
               Joosep Serva
             </h1>
-            <span className="rounded-sm bg-[#00852b] px-3 py-1 text-xs font-bold text-[#1a1a2e]">
-              Available
-            </span>
+            {SEEKING_JOB && (
+              <span className="rounded-sm bg-[#00852b] px-3 py-1 text-xs font-bold text-[#1a1a2e]">
+                Available
+              </span>
+            )}
           </div>
           <p className="mt-1 text-base text-gray-600">
             Software Engineer &middot; AI Practitioner
