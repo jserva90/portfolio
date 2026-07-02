@@ -78,23 +78,51 @@ export function Hero() {
             <Magnetic>
               <a
                 href="#experience"
-                className="inline-flex items-center rounded-sm bg-lego-red px-6 py-3 text-sm font-bold uppercase tracking-wider text-white transition-colors hover:bg-red-700"
+                className="group inline-flex items-center gap-2 rounded-sm bg-lego-red px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-[0_4px_16px_rgba(227,0,11,0.3)] transition-[background-color,box-shadow] duration-300 hover:bg-red-700 hover:shadow-[0_6px_24px_rgba(227,0,11,0.45)]"
               >
                 View my work
+                <svg
+                  className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M2 8h11M9.5 3.5 14 8l-4.5 4.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </a>
             </Magnetic>
             <Magnetic>
               <a
                 href="/cv"
-                className="inline-flex items-center rounded-sm bg-white px-6 py-3 text-sm font-bold uppercase tracking-wider text-lego-black transition-colors hover:bg-lego-light"
+                className="group inline-flex items-center gap-2 rounded-sm bg-white px-6 py-3 text-sm font-bold uppercase tracking-wider text-lego-black shadow-[0_4px_16px_rgba(255,255,255,0.12)] transition-[background-color,box-shadow] duration-300 hover:bg-lego-light hover:shadow-[0_6px_24px_rgba(255,255,255,0.2)]"
               >
                 Download CV
+                <svg
+                  className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-y-0.5"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 2v8m0 0 3.5-3.5M8 10 4.5 6.5M3 13.5h10"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </a>
             </Magnetic>
             <Magnetic>
               <a
                 href="#contact"
-                className="inline-flex items-center rounded-sm border-2 border-lego-gray/30 px-6 py-3 text-sm font-bold uppercase tracking-wider text-lego-gray transition-colors hover:border-white hover:text-white"
+                className="inline-flex items-center rounded-sm border-2 border-lego-gray/30 px-6 py-3 text-sm font-bold uppercase tracking-wider text-lego-gray transition-colors duration-300 hover:border-lego-yellow/70 hover:text-white"
               >
                 Get in touch
               </a>

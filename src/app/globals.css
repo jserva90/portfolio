@@ -80,6 +80,11 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Anchored sections stop below the fixed nav instead of under it. */
+section[id] {
+  scroll-margin-top: 72px;
+}
+
 /* LEGO stud pattern for decorative elements */
 .lego-stud {
   width: var(--stud-size);
