@@ -17,7 +17,7 @@ export function CvView({ cv }: { cv: React.ReactNode }) {
         onClick={() => setManual((m) => !m)}
         className="no-print fixed bottom-6 right-6 z-50 rounded-sm bg-[#f5c400] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-[#1a1a2e] shadow-lg transition-transform hover:scale-105"
       >
-        {manual ? "📄 Back to normal CV" : "📘 View as building instructions"}
+        {manual ? "Back to normal CV" : "View as building instructions"}
       </button>
       <div className={manual ? "hidden print:block" : ""}>{cv}</div>
       {manual && <ManualCv />}
@@ -268,7 +268,7 @@ function ManualCv() {
               className="mcv-anim mt-10 rounded-sm bg-[#f5c400] px-4 py-2 text-xs font-bold uppercase tracking-wider"
               style={{ animation: "mcv-float 2.2s ease-in-out infinite" }}
             >
-              🎁 Shake the box to open
+              Shake the box to open
             </p>
           </button>
         )}
@@ -341,7 +341,7 @@ function ManualCv() {
               className="font-display mcv-anim text-3xl font-bold"
               style={{ animation: "mcv-pop 0.5s ease backwards" }}
             >
-              🎉 Build complete!
+              Build complete!
             </h2>
             <p className="mt-2 text-sm text-[#1a1a2e]/60">
               Every piece used in this set.
