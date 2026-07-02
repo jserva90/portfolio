@@ -125,10 +125,6 @@ const KEYFRAMES = `
   25% { transform: rotate(-4deg) scale(1.06); }
   75% { transform: rotate(4deg) scale(1.06); }
 }
-@keyframes mcv-confetti {
-  0% { opacity: 1; transform: translateY(-40px) rotate(0); }
-  100% { opacity: 0; transform: translateY(480px) rotate(540deg); }
-}
 @keyframes mcv-glow {
   0%, 100% { box-shadow: 0 3px 8px rgba(0,0,0,0.35); }
   50% { box-shadow: 0 3px 18px rgba(245,196,0,0.75); }
@@ -340,18 +336,7 @@ function ManualCv() {
 
         {/* Parts inventory + confetti finale */}
         {stepIndex === STEPS.length && (
-          <div className="relative min-h-[440px] overflow-hidden">
-            {Array.from({ length: 26 }).map((_, i) => (
-              <span
-                key={i}
-                className="mcv-anim pointer-events-none absolute top-0 h-3 w-3 rounded-[2px]"
-                style={{
-                  left: `${(i * 137) % 100}%`,
-                  background: [RED, YELLOW, BLUE, GREEN][i % 4],
-                  animation: `mcv-confetti ${1.6 + (i % 5) * 0.35}s ease-in ${(i % 7) * 0.18}s backwards`,
-                }}
-              />
-            ))}
+          <div className="relative min-h-[440px]">
             <h2
               className="font-display mcv-anim text-3xl font-bold"
               style={{ animation: "mcv-pop 0.5s ease backwards" }}
