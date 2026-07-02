@@ -1,4 +1,6 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 // Link-preview card (LinkedIn, X, Slack...): dark LEGO-brand composition
 // generated at build time — no external assets.
@@ -8,7 +10,12 @@ export const contentType = "image/png";
 
 const BRICKS = ["#e3000b", "#f5c400", "#006db7", "#00852b"];
 
-export default function OpenGraphImage() {
+export default async function OpenGraphImage() {
+  // Bundled in-repo so builds never depend on fetching the font.
+  const bricolage = await readFile(
+    join(process.cwd(), "src/app/bricolage-grotesque-800.ttf"),
+  );
+
   return new ImageResponse(
     (
       <div
@@ -54,6 +61,7 @@ export default function OpenGraphImage() {
         <div
           style={{
             fontSize: 84,
+            fontFamily: "Bricolage Grotesque",
             fontWeight: 800,
             letterSpacing: -2,
             lineHeight: 1.05,
@@ -104,6 +112,16 @@ export default function OpenGraphImage() {
         </div>
       </div>
     ),
-    size,
+    {
+      ...size,
+      fonts: [
+        {
+          name: "Bricolage Grotesque",
+          data: bricolage,
+          weight: 800,
+          style: "normal",
+        },
+      ],
+    },
   );
 }
