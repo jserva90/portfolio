@@ -43,6 +43,17 @@ function buildCommands(close: () => void, copyEmail: () => void): Command[] {
     { id: "linkedin", label: "Open LinkedIn", group: "Links", keywords: "profile network", color: "bg-lego-blue", run: open("https://www.linkedin.com/in/joosep-serva-65b069221/") },
     { id: "email", label: "Copy email address", group: "Links", keywords: `mail ${EMAIL}`, color: "bg-lego-yellow", run: copyEmail },
     {
+      id: "brickify",
+      label: "Brickify a photo",
+      group: "Fun",
+      keywords: "lego mosaic image picture art toy convert",
+      color: "bg-lego-yellow",
+      run: () => {
+        close();
+        window.location.href = "/brickify";
+      },
+    },
+    {
       id: "bricks",
       label: "Make it rain bricks",
       group: "Fun",
