@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { drawPart, part, project } from "@/lib/iso";
+import * as THREE from "three";
 
 // Curated real-LEGO palette (BrickLink color names + hex).
 const PALETTE: Array<{ name: string; hex: string }> = [
@@ -63,9 +63,12 @@ function nearestColor(r: number, g: number, b: number): number {
   const [L, A, B2] = srgbToLab(r, g, b);
   let best = 0;
   let bestD = Infinity;
+  // Chroma weighted 1.7×: neutral areas must map to grays/tans, never to
+  // pink or teal specks — the classic limited-palette dithering artifact.
+  const W = 1.7;
   for (let i = 0; i < PALETTE_LAB.length; i++) {
     const [l2, a2, b2] = PALETTE_LAB[i];
-    const d = (L - l2) ** 2 + (A - a2) ** 2 + (B2 - b2) ** 2;
+    const d = (L - l2) ** 2 + (W * (A - a2)) ** 2 + (W * (B2 - b2)) ** 2;
     if (d < bestD) {
       bestD = d;
       best = i;
@@ -133,8 +136,14 @@ export function Brickifier() {
     }
 
     const out = new Uint8Array(grid * grid);
+    const clampErr = (e: number) => Math.max(-40, Math.min(40, e)) * 0.72;
     for (let y = 0; y < grid; y++) {
-      for (let x = 0; x < grid; x++) {
+      // Serpentine scan: alternate direction per row so diffusion worms
+      // don't drift diagonally across the image.
+      const ltr = y % 2 === 0;
+      for (let xi = 0; xi < grid; xi++) {
+        const x = ltr ? xi : grid - 1 - xi;
+        const dir = ltr ? 1 : -1;
         const i = y * grid + x;
         const r = Math.max(0, Math.min(255, px[i * 3]));
         const g = Math.max(0, Math.min(255, px[i * 3 + 1]));
@@ -142,11 +151,12 @@ export function Brickifier() {
         const idx = nearestColor(r, g, b);
         out[i] = idx;
         if (dither) {
-          // Floyd–Steinberg error diffusion.
+          // Floyd–Steinberg, damped + clamped: full-strength diffusion on
+          // a 25-color palette sprays confetti into smooth areas.
           const [pr, pg, pb] = PALETTE_RGB[idx];
-          const er = r - pr;
-          const eg = g - pg;
-          const eb = b - pb;
+          const er = clampErr(r - pr);
+          const eg = clampErr(g - pg);
+          const eb = clampErr(b - pb);
           const spread = (dx: number, dy: number, w: number) => {
             const nx = x + dx;
             const ny = y + dy;
@@ -156,97 +166,62 @@ export function Brickifier() {
             px[j + 1] += (eg * w) / 16;
             px[j + 2] += (eb * w) / 16;
           };
-          spread(1, 0, 7);
-          spread(-1, 1, 3);
+          spread(dir, 0, 7);
+          spread(-dir, 1, 3);
           spread(0, 1, 5);
-          spread(1, 1, 1);
+          spread(dir, 1, 1);
         }
       }
     }
     setCells(out);
   }, [img, grid, dither]);
 
-  /* ── Render the current view ── */
+  /* ── Render the mosaic view (the 3D relief is WebGL, below) ── */
   useEffect(() => {
+    if (view !== "mosaic") return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx || !cells) return;
 
-    // Derive the grid from the data itself: when the resolution changes,
-    // this effect can fire before re-quantization, and indexing the old
-    // cells with the new `grid` state would read past the end.
+    // Derive the grid from the data itself so a resolution change can
+    // never index stale cells with the new size.
     const n = Math.round(Math.sqrt(cells.length));
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const W = 820;
-    const H = view === "mosaic" ? 820 : 680;
     canvas.width = W * dpr;
-    canvas.height = H * dpr;
+    canvas.height = W * dpr;
     canvas.style.width = "100%";
-    canvas.style.aspectRatio = `${W} / ${H}`;
+    canvas.style.aspectRatio = "1";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = "#14141f";
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#0e0e16";
+    ctx.fillRect(0, 0, W, W);
 
-    if (view === "mosaic") {
-      // Flat LEGO-Art render: square base tile + round stud with lighting.
-      const cell = (W - 40) / n;
-      const ox = 20;
-      const oy = 20;
-      for (let y = 0; y < n; y++) {
-        for (let x = 0; x < n; x++) {
-          const hex = PALETTE[cells[y * n + x]].hex;
-          const cx = ox + x * cell;
-          const cy = oy + y * cell;
-          ctx.fillStyle = hex;
-          ctx.fillRect(cx, cy, cell, cell);
-          // stud
-          const r = cell * 0.36;
-          ctx.fillStyle = "rgba(0,0,0,0.18)";
-          ctx.beginPath();
-          ctx.arc(cx + cell / 2 + r * 0.12, cy + cell / 2 + r * 0.12, r, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = hex;
-          ctx.beginPath();
-          ctx.arc(cx + cell / 2, cy + cell / 2, r, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = "rgba(255,255,255,0.22)";
-          ctx.beginPath();
-          ctx.arc(cx + cell / 2 - r * 0.25, cy + cell / 2 - r * 0.25, r * 0.45, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    } else {
-      // 3D relief through the isometric brick engine: brightness → height.
-      const maxLevels = 5;
-      const levels = new Uint8Array(n * n);
-      for (let i = 0; i < n * n; i++) {
-        const [r, g, b] = PALETTE_RGB[cells[i]];
-        const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        levels[i] = 1 + Math.round((lum / 255) * (maxLevels - 1));
-      }
-      const s = Math.min(
-        (W * 0.94) / (n * 2 * 0.866),
-        (H * 0.9) / (n * 1 + maxLevels * 1.2),
-      );
-      const originX = W / 2;
-      const originY = 30 + maxLevels * 1.2 * s;
-      // Painter order: back-to-front along x+y.
-      for (let sum = 0; sum <= (n - 1) * 2; sum++) {
-        for (let x = Math.max(0, sum - n + 1); x <= Math.min(n - 1, sum); x++) {
-          const y = sum - x;
-          const i = y * n + x;
-          const h = levels[i];
-          const { px, py } = project(x, y, 0, s);
-          drawPart(
-            ctx,
-            part("brick", PALETTE[cells[i]].hex, 0, 0, 0, 1, 1, h),
-            originX + px,
-            originY + py,
-            s,
-            1,
-          );
-        }
+    // Flat LEGO-Art render: gapped square tile + round stud with lighting.
+    const cell = (W - 40) / n;
+    const gap = Math.max(0.75, cell * 0.045);
+    const ox = 20;
+    const oy = 20;
+    for (let y = 0; y < n; y++) {
+      for (let x = 0; x < n; x++) {
+        const hex = PALETTE[cells[y * n + x]].hex;
+        const cx = ox + x * cell;
+        const cy = oy + y * cell;
+        ctx.fillStyle = hex;
+        ctx.fillRect(cx + gap, cy + gap, cell - gap * 2, cell - gap * 2);
+        const r = cell * 0.33;
+        ctx.fillStyle = "rgba(0,0,0,0.16)";
+        ctx.beginPath();
+        ctx.arc(cx + cell / 2 + r * 0.12, cy + cell / 2 + r * 0.12, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = hex;
+        ctx.beginPath();
+        ctx.arc(cx + cell / 2, cy + cell / 2, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.2)";
+        ctx.beginPath();
+        ctx.arc(cx + cell / 2 - r * 0.25, cy + cell / 2 - r * 0.25, r * 0.45, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
   }, [cells, view]);
@@ -265,7 +240,10 @@ export function Brickifier() {
   }, [cells]);
 
   const exportPng = useCallback(() => {
-    const canvas = canvasRef.current;
+    const canvas =
+      view === "relief"
+        ? document.querySelector<HTMLCanvasElement>("#relief3d canvas")
+        : canvasRef.current;
     if (!canvas) return;
     canvas.toBlob((blob) => {
       if (!blob) return;
@@ -329,7 +307,11 @@ export function Brickifier() {
           {/* Canvas */}
           <div className="mt-4 overflow-hidden rounded-sm border border-white/10 bg-[#14141f]">
             {cells ? (
-              <canvas ref={canvasRef} className="block w-full" />
+              view === "mosaic" ? (
+                <canvas ref={canvasRef} className="block w-full" />
+              ) : (
+                <Relief3D cells={cells} />
+              )
             ) : (
               <div className="flex aspect-square items-center justify-center text-sm text-lego-gray/50">
                 Your mosaic will appear here
@@ -462,6 +444,142 @@ function Control({
         {label}
       </p>
       {children}
+    </div>
+  );
+}
+
+/**
+ * WebGL relief: every cell becomes a real 3D brick column (instanced,
+ * so 64×64 = 4096 bricks + studs render in two draw calls). Click-drag
+ * orbits it in any direction, scroll zooms, and it slowly spins when idle.
+ */
+function Relief3D({ cells }: { cells: Uint8Array }) {
+  const mountRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+    const n = Math.round(Math.sqrt(cells.length));
+    const W = mount.clientWidth || 820;
+    const H = Math.round(W * 0.78);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      preserveDrawingBuffer: true, // for PNG export
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(W, H);
+    renderer.domElement.style.cursor = "grab";
+    renderer.domElement.style.touchAction = "none";
+    mount.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, W / H, 0.5, n * 12);
+    scene.add(new THREE.HemisphereLight(0xf1ecff, 0x22222e, 1.1));
+    const key = new THREE.DirectionalLight(0xfff2dd, 1.5);
+    key.position.set(1, 2.2, 1.2);
+    scene.add(key);
+
+    const MAX_H = 6;
+    const brickGeo = new THREE.BoxGeometry(0.94, 1, 0.94);
+    const studGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.18, 12);
+    const mat = new THREE.MeshStandardMaterial({ roughness: 0.45 });
+    const bricks = new THREE.InstancedMesh(brickGeo, mat, n * n);
+    const studs = new THREE.InstancedMesh(studGeo, mat.clone(), n * n);
+    const m = new THREE.Matrix4();
+    const col = new THREE.Color();
+    for (let z = 0; z < n; z++) {
+      for (let x = 0; x < n; x++) {
+        const i = z * n + x;
+        const [r, g, b] = PALETTE_RGB[cells[i]];
+        const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        const h = 0.6 + lum * (MAX_H - 0.6);
+        m.makeScale(1, h, 1);
+        m.setPosition(x - n / 2 + 0.5, h / 2, z - n / 2 + 0.5);
+        bricks.setMatrixAt(i, m);
+        m.makeScale(1, 1, 1);
+        m.setPosition(x - n / 2 + 0.5, h + 0.09, z - n / 2 + 0.5);
+        studs.setMatrixAt(i, m);
+        col.setRGB(r / 255, g / 255, b / 255, THREE.SRGBColorSpace);
+        bricks.setColorAt(i, col);
+        studs.setColorAt(i, col);
+      }
+    }
+    scene.add(bricks, studs);
+
+    // Minimal orbit: drag = yaw/pitch, wheel = zoom, idle = slow spin.
+    let yaw = 0.8;
+    let pitch = 0.55;
+    let dist = n * 1.7;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    const el = renderer.domElement;
+    const onDown = (e: PointerEvent) => {
+      dragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      el.setPointerCapture(e.pointerId);
+      el.style.cursor = "grabbing";
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!dragging) return;
+      yaw -= (e.clientX - lastX) * 0.006;
+      pitch = Math.max(-0.4, Math.min(1.35, pitch + (e.clientY - lastY) * 0.005));
+      lastX = e.clientX;
+      lastY = e.clientY;
+    };
+    const onUp = () => {
+      dragging = false;
+      el.style.cursor = "grab";
+    };
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      dist = Math.max(n * 0.7, Math.min(n * 3.5, dist * (1 + e.deltaY * 0.001)));
+    };
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", onUp);
+    el.addEventListener("pointercancel", onUp);
+    el.addEventListener("wheel", onWheel, { passive: false });
+
+    let raf = 0;
+    const loop = () => {
+      if (!dragging) yaw += 0.0012;
+      camera.position.set(
+        Math.sin(yaw) * Math.cos(pitch) * dist,
+        Math.sin(pitch) * dist + MAX_H * 0.5,
+        Math.cos(yaw) * Math.cos(pitch) * dist,
+      );
+      camera.lookAt(0, MAX_H * 0.4, 0);
+      renderer.render(scene, camera);
+      raf = requestAnimationFrame(loop);
+    };
+    loop();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", onUp);
+      el.removeEventListener("pointercancel", onUp);
+      el.removeEventListener("wheel", onWheel);
+      brickGeo.dispose();
+      studGeo.dispose();
+      mat.dispose();
+      (studs.material as THREE.Material).dispose();
+      renderer.dispose();
+      mount.removeChild(el);
+    };
+  }, [cells]);
+
+  return (
+    <div id="relief3d">
+      <div ref={mountRef} className="w-full" />
+      <p className="pb-3 text-center font-mono text-[11px] text-lego-gray/60">
+        drag to spin · scroll to zoom
+      </p>
     </div>
   );
 }
