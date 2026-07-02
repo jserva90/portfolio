@@ -172,6 +172,11 @@ export function Brickifier() {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx || !cells) return;
 
+    // Derive the grid from the data itself: when the resolution changes,
+    // this effect can fire before re-quantization, and indexing the old
+    // cells with the new `grid` state would read past the end.
+    const n = Math.round(Math.sqrt(cells.length));
+
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const W = 820;
     const H = view === "mosaic" ? 820 : 680;
@@ -185,12 +190,12 @@ export function Brickifier() {
 
     if (view === "mosaic") {
       // Flat LEGO-Art render: square base tile + round stud with lighting.
-      const cell = (W - 40) / grid;
+      const cell = (W - 40) / n;
       const ox = 20;
       const oy = 20;
-      for (let y = 0; y < grid; y++) {
-        for (let x = 0; x < grid; x++) {
-          const hex = PALETTE[cells[y * grid + x]].hex;
+      for (let y = 0; y < n; y++) {
+        for (let x = 0; x < n; x++) {
+          const hex = PALETTE[cells[y * n + x]].hex;
           const cx = ox + x * cell;
           const cy = oy + y * cell;
           ctx.fillStyle = hex;
@@ -214,23 +219,23 @@ export function Brickifier() {
     } else {
       // 3D relief through the isometric brick engine: brightness → height.
       const maxLevels = 5;
-      const levels = new Uint8Array(grid * grid);
-      for (let i = 0; i < grid * grid; i++) {
+      const levels = new Uint8Array(n * n);
+      for (let i = 0; i < n * n; i++) {
         const [r, g, b] = PALETTE_RGB[cells[i]];
         const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
         levels[i] = 1 + Math.round((lum / 255) * (maxLevels - 1));
       }
       const s = Math.min(
-        (W * 0.94) / (grid * 2 * 0.866),
-        (H * 0.9) / (grid * 1 + maxLevels * 1.2),
+        (W * 0.94) / (n * 2 * 0.866),
+        (H * 0.9) / (n * 1 + maxLevels * 1.2),
       );
       const originX = W / 2;
       const originY = 30 + maxLevels * 1.2 * s;
       // Painter order: back-to-front along x+y.
-      for (let sum = 0; sum <= (grid - 1) * 2; sum++) {
-        for (let x = Math.max(0, sum - grid + 1); x <= Math.min(grid - 1, sum); x++) {
+      for (let sum = 0; sum <= (n - 1) * 2; sum++) {
+        for (let x = Math.max(0, sum - n + 1); x <= Math.min(n - 1, sum); x++) {
           const y = sum - x;
-          const i = y * grid + x;
+          const i = y * n + x;
           const h = levels[i];
           const { px, py } = project(x, y, 0, s);
           drawPart(
@@ -244,7 +249,7 @@ export function Brickifier() {
         }
       }
     }
-  }, [cells, view, grid]);
+  }, [cells, view]);
 
   /* ── Parts list ── */
   const parts = useMemo(() => {
