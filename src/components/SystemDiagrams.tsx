@@ -14,7 +14,14 @@ type DNode = {
   note: string;
 };
 type DEdge = { from: string; to: string; packets?: number };
-type Diagram = { id: string; title: string; nodes: DNode[]; edges: DEdge[] };
+type Diagram = {
+  id: string;
+  title: string;
+  nodes: DNode[];
+  edges: DEdge[];
+  /** viewBox width — the RAG diagram is wider than the pipeline. */
+  w?: number;
+};
 
 const RED = "#e3000b";
 const YELLOW = "#f5c400";
@@ -47,21 +54,26 @@ const DIAGRAMS: Diagram[] = [
   {
     id: "rag",
     title: "Plug-and-play RAG platform",
+    w: 1140,
     nodes: [
       { id: "src", label: "Sources", sub: "PDFs · web · docs", x: 20, y: 100, color: YELLOW, note: "Any team brings its own knowledge: PDFs, webpages, internal docs. The platform's promise is that this is the only part they have to think about." },
-      { id: "ingest", label: "Ingestion", sub: "structure chunks", x: 175, y: 100, color: BLUE, note: "Chunking follows document structure, not a fixed character count — a heading plus its body beats an arbitrary 512-token window every time." },
-      { id: "search", label: "OpenSearch", sub: "hybrid index", x: 330, y: 100, color: GREEN, note: "Hybrid retrieval: BM25 keywords and vectors together. Chosen because banks already run and trust OpenSearch — boring infra is a feature." },
-      { id: "api", label: "Retrieval API", sub: "one platform", x: 490, y: 100, color: RED, note: "One API, many assistants. The insurance team's bot shipped in days on the same platform — that scalability was the whole point, and it won Project of the Year." },
-      { id: "llm", label: "LLM answer", sub: "grounded + cited", x: 645, y: 40, color: BLUE, note: "Answers cite their sources, and when retrieval comes back weak the bot says 'I don't know' instead of improvising. Trust is the product." },
-      { id: "mon", label: "Langfuse", sub: "traces · feedback", x: 645, y: 160, color: YELLOW, note: "Every conversation traced, every thumbs-down reviewable. You can't improve a RAG system you can't see into." },
-      { id: "clients", label: "Clients", sub: "Slack · Zendesk · API", x: 800, y: 100, color: GREEN, note: "Meet people where they already work — most users never saw a new UI, just better answers inside Slack and Zendesk." },
+      { id: "ingest", label: "Ingestion", sub: "structure chunks", x: 160, y: 100, color: BLUE, note: "Chunking follows document structure, not a fixed character count — a heading plus its body beats an arbitrary 512-token window every time." },
+      { id: "embed", label: "Embedder", sub: "chunks → vectors", x: 300, y: 40, color: RED, note: "Every chunk becomes a vector — and the exact same model embeds the user's question at ask-time. Mismatched embedding spaces are the classic silent RAG failure, so the embedder is pinned and versioned like a schema." },
+      { id: "search", label: "OpenSearch", sub: "hybrid index", x: 440, y: 100, color: GREEN, note: "Hybrid retrieval: BM25 keywords and vectors together, because names, codes and abbreviations die in pure vector search. OpenSearch because banks already run and trust it — boring infra is a feature." },
+      { id: "api", label: "Retrieval API", sub: "one platform", x: 580, y: 100, color: RED, note: "One API, many assistants. The insurance team's bot shipped in days on the same platform — that scalability was the whole point, and it won Project of the Year." },
+      { id: "rerank", label: "Reranker", sub: "precision pass", x: 720, y: 40, color: BLUE, note: "Hybrid search buys recall; a cross-encoder rerank over the top-k buys precision. It reads query and chunk together, which cosine similarity never does — and it's far cheaper than stuffing a bigger context." },
+      { id: "mon", label: "Langfuse", sub: "traces · feedback", x: 720, y: 160, color: YELLOW, note: "Every conversation traced, every thumbs-down reviewable. You can't improve a RAG system you can't see into." },
+      { id: "llm", label: "LLM answer", sub: "grounded + cited", x: 860, y: 100, color: BLUE, note: "Answers cite their sources, and when retrieval comes back weak the bot says 'I don't know' instead of improvising. Trust is the product." },
+      { id: "clients", label: "Clients", sub: "Slack · Zendesk", x: 1000, y: 100, color: GREEN, note: "Meet people where they already work — most users never saw a new UI, just better answers inside Slack and Zendesk." },
     ],
     edges: [
       { from: "src", to: "ingest", packets: 2 },
-      { from: "ingest", to: "search", packets: 1 },
+      { from: "ingest", to: "embed", packets: 1 },
+      { from: "embed", to: "search", packets: 1 },
       { from: "search", to: "api", packets: 2 },
-      { from: "api", to: "llm", packets: 1 },
+      { from: "api", to: "rerank", packets: 1 },
       { from: "api", to: "mon", packets: 1 },
+      { from: "rerank", to: "llm", packets: 1 },
       { from: "llm", to: "clients", packets: 1 },
     ],
   },
@@ -124,8 +136,8 @@ export function SystemDiagrams() {
           <div className="mt-4 overflow-x-auto rounded-sm border border-foreground/10 bg-white p-4 shadow-md">
             <svg
               key={d.id}
-              viewBox="0 0 940 240"
-              className="min-w-[760px]"
+              viewBox={`0 0 ${d.w ?? 940} 240`}
+              className="min-w-[820px]"
               role="img"
               aria-label={d.title}
             >
