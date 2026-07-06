@@ -37,10 +37,12 @@ function buildStages(): Part[][] {
   // Stage 0 — foundation: base plate + green pad
   box(stages[0], 0, 0, 0, 14, 8, 1, D);
   box(stages[0], 1, 1, 1, 12, 6, 1, G);
-  // Stage 1 — structure: machine body, column, crossbeam
+  // Stage 1 — structure: machine body, full-height column, and a beam
+  // that rests on BOTH the body top and the column top (real LEGO bridge,
+  // nothing cantilevers into thin air).
   box(stages[1], 2, 2, 2, 6, 4, 4, B);
-  box(stages[1], 9, 3, 2, 2, 2, 2, Y);
-  box(stages[1], 8, 3, 4, 3, 2, 1, Y);
+  box(stages[1], 9, 3, 2, 2, 2, 4, Y);
+  box(stages[1], 6, 3, 6, 5, 2, 1, Y);
   // Stage 2 — details: hopper funnel, chimney, chute, output brick, lights
   box(stages[2], 4, 3, 6, 2, 2, 1, Y);
   box(stages[2], 3, 2, 7, 4, 4, 1, R);
@@ -50,7 +52,22 @@ function buildStages(): Part[][] {
   box(stages[2], 12, 3, 2, 1, 2, 1, R); // the freshly made brick
   stages[2].set(vkey(3, 5, 4), Y); // indicator lights on the front
   stages[2].set(vkey(5, 5, 4), R);
-  return stages.map((v) => painterSort(brickify(v)));
+
+  // Studs must respect the WHOLE machine, not just their own stage:
+  // a foundation brick under the body shouldn't show studs, and every
+  // exposed top should. Recompute studs against the combined voxel map.
+  const combined: Voxels = new Map();
+  for (const v of stages) for (const [k, c] of v) combined.set(k, c);
+  return stages.map((v) =>
+    painterSort(
+      brickify(v).map((p) => ({
+        ...p,
+        studs: p.studs.filter(
+          ([i, j]) => !combined.has(vkey(p.x + i, p.y + j, p.z + p.h)),
+        ),
+      })),
+    ),
+  );
 }
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -121,7 +138,10 @@ export function HowIBuild() {
       }),
     );
 
-    const render = (P: number) => {
+    const render = (rawP: number) => {
+      // Everything is fully seated by 90% of the pin, so the machine is
+      // never caught mid-air as the section releases.
+      const P = clamp01(rawP / 0.9);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W_, H_);
       layout.forEach((parts, si) => {
@@ -129,7 +149,7 @@ export function HowIBuild() {
         const n = parts.length;
         parts.forEach((p, i) => {
           // Each brick claims a slice of its stage's progress window.
-          const t0 = (i / n) * 0.7;
+          const t0 = (i / n) * 0.6;
           const t = easeOut(clamp01((stageP - t0) / 0.3));
           if (t <= 0.01) return;
           drawPart(
