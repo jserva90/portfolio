@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Part, Voxels, box, brickify, drawPart, painterSort, project, vkey } from "@/lib/iso";
+import { Part, Voxels, box, brickify, drawPart, painterSort, project } from "@/lib/iso";
 
 const Y = "#f5c400";
 const R = "#e3000b";
@@ -50,21 +50,18 @@ function buildStages(): Part[][] {
   box(stages[2], 2, 2, 9, 1, 1, 1, W);
   box(stages[2], 11, 3, 1, 3, 2, 1, D);
   box(stages[2], 12, 3, 2, 1, 2, 1, R); // the freshly made brick
-  stages[2].set(vkey(3, 5, 4), Y); // indicator lights on the front
-  stages[2].set(vkey(5, 5, 4), R);
-
-  // Studs must respect the WHOLE machine, not just their own stage:
-  // a foundation brick under the body shouldn't show studs, and every
-  // exposed top should. Recompute studs against the combined voxel map.
-  const combined: Voxels = new Map();
-  for (const v of stages) for (const [k, c] of v) combined.set(k, c);
+  // Every brick gets ALL of its studs — like a real brick in your hand.
+  // When one lands on another, the upper brick simply draws over the
+  // studs beneath it (painter order is bottom-up), which is exactly how
+  // physical stacking hides them.
   return stages.map((v) =>
     painterSort(
       brickify(v).map((p) => ({
         ...p,
-        studs: p.studs.filter(
-          ([i, j]) => !combined.has(vkey(p.x + i, p.y + j, p.z + p.h)),
-        ),
+        studs: Array.from({ length: p.w * p.d }, (_, k) => [
+          k % p.w,
+          Math.floor(k / p.w),
+        ]) as Array<[number, number]>,
       })),
     ),
   );
@@ -132,8 +129,9 @@ export function HowIBuild() {
           b,
           tx: px + ox,
           ty: py + oy,
-          dx: (((i * 7919) % 200) - 100) * 0.6,
-          dy: -300 - ((i * 104729) % 160),
+          // Straight vertical drop — bricks are placed, not scattered.
+          dx: 0,
+          dy: -180 - ((i * 104729) % 90),
         };
       }),
     );
