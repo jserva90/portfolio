@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Part, Voxels, box, brickify, drawPart, painterSort, project } from "@/lib/iso";
+import { Part, Voxels, box, brickify, disc, drawPart, painterSort, project, vkey } from "@/lib/iso";
 
-const Y = "#f5c400";
-const R = "#e3000b";
-const B = "#006db7";
+const S1 = "#a8adb2"; // castle stone, light
+const S2 = "#7d8288"; // castle stone, weathered
 const G = "#00852b";
-const W = "#f0ede6";
 const D = "#4f5566";
+const R = "#e3000b";
+const Y = "#f5c400";
+const WOOD = "#582a12";
+const K = "#2a2440";
 
 const PRINCIPLES = [
   {
@@ -31,32 +33,99 @@ const PRINCIPLES = [
   },
 ];
 
-/** The machine, one voxel map per assembly stage. */
-function buildStages(): Part[][] {
-  const stages: Voxels[] = [new Map(), new Map(), new Map()];
-  // Stage 0 — foundation: base plate + green pad
-  box(stages[0], 0, 0, 0, 14, 8, 1, D);
-  box(stages[0], 1, 1, 1, 12, 6, 1, G);
-  // Stage 1 — structure: machine body, full-height column, and a beam
-  // that rests on BOTH the body top and the column top (real LEGO bridge,
-  // nothing cantilevers into thin air).
-  box(stages[1], 2, 2, 2, 6, 4, 4, B);
-  box(stages[1], 9, 3, 2, 2, 2, 4, Y);
-  box(stages[1], 6, 3, 6, 5, 2, 1, Y);
-  // Stage 2 — details: hopper funnel, chimney, chute, output brick, lights
-  box(stages[2], 4, 3, 6, 2, 2, 1, Y);
-  box(stages[2], 3, 2, 7, 4, 4, 1, R);
-  box(stages[2], 2, 2, 6, 1, 1, 3, D);
-  box(stages[2], 2, 2, 9, 1, 1, 1, W);
-  box(stages[2], 11, 3, 1, 3, 2, 1, D);
-  box(stages[2], 12, 3, 2, 1, 2, 1, R); // the freshly made brick
-  // Every brick gets ALL of its studs — like a real brick in your hand.
-  // When one lands on another, the upper brick simply draws over the
-  // studs beneath it (painter order is bottom-up), which is exactly how
-  // physical stacking hides them.
-  return stages.map((v) =>
+/** A full castle, one voxel map per assembly stage. */
+function buildStages(): { stages: Part[][]; pieces: number } {
+  const v: Voxels[] = [new Map(), new Map(), new Map()];
+  const TOWERS: Array<[number, number]> = [
+    [4.5, 4.5],
+    [38.5, 4.5],
+    [4.5, 28.5],
+    [38.5, 28.5],
+  ];
+
+  // ── Stage 0 — foundation: grounds + stone path to the gate ──
+  box(v[0], 0, 0, 0, 44, 34, 1, G);
+  box(v[0], 19, 26, 0, 6, 8, 1, D);
+
+  // ── Stage 1 — structure: curtain walls, towers, gatehouse, keep ──
+  box(v[1], 4, 4, 1, 36, 2, 7, S1); // back wall
+  box(v[1], 4, 28, 1, 15, 2, 7, S1); // front wall, left of gate
+  box(v[1], 25, 28, 1, 15, 2, 7, S1); // front wall, right of gate
+  box(v[1], 4, 6, 1, 2, 22, 7, S1); // west wall
+  box(v[1], 38, 6, 1, 2, 22, 7, S1); // east wall
+  for (const [cx, cy] of TOWERS) {
+    for (let z = 1; z <= 12; z++) disc(v[1], cx, cy, z, 3.2, 3.2, S1);
+  }
+  // Gatehouse: two piers, and a lintel that RESTS on both pier tops.
+  box(v[1], 16, 26, 1, 3, 4, 7, S1);
+  box(v[1], 25, 26, 1, 3, 4, 7, S1);
+  box(v[1], 16, 28, 8, 12, 2, 2, S1);
+  box(v[1], 19, 29, 1, 6, 1, 7, WOOD); // gate doors, flush under the lintel
+  // Keep
+  box(v[1], 14, 10, 1, 12, 10, 13, S1);
+  // Windows & arrow slits live in the SAME map as their walls, so the
+  // bricker fits them flush into the masonry — no overlapping voxels.
+  for (const [x, z] of [
+    [16, 9], [23, 9], [16, 5], [23, 5], [19, 11], [20, 11],
+  ] as const) {
+    v[1].set(vkey(x, 19, z), K);
+  }
+  v[1].set(vkey(25, 13, 8), K);
+  v[1].set(vkey(25, 16, 8), K);
+  for (const [cx, cy] of TOWERS) {
+    v[1].set(vkey(Math.floor(cx), Math.round(cy + 2.5), 5), K);
+    v[1].set(vkey(Math.floor(cx), Math.round(cy + 2.5), 9), K);
+  }
+
+  // ── Stage 2 — details: crenellations, parapets, roofs, banner ──
+  for (let x = 4; x <= 39; x += 2) {
+    v[2].set(vkey(x, 4, 8), S2);
+    if (x <= 18 || x >= 25) v[2].set(vkey(x, 29, 8), S2);
+  }
+  for (let y = 6; y <= 27; y += 2) {
+    v[2].set(vkey(4, y, 8), S2);
+    v[2].set(vkey(39, y, 8), S2);
+  }
+  for (let x = 16; x <= 27; x += 2) v[2].set(vkey(x, 29, 10), S2); // lintel parapet
+  for (const [cx, cy] of TOWERS) {
+    // Parapet ring on the tower top, walkway hole in the middle
+    disc(v[2], cx, cy, 13, 3.4, 3.4, S1);
+    for (let x = Math.floor(cx - 4); x <= Math.ceil(cx + 4); x++) {
+      for (let y = Math.floor(cy - 4); y <= Math.ceil(cy + 4); y++) {
+        if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) < 2.0) v[2].delete(vkey(x, y, 13));
+      }
+    }
+    for (let k = 0; k < 360; k += 45) {
+      const a = (k * Math.PI) / 180;
+      v[2].set(
+        vkey(Math.round(cx + Math.cos(a) * 2.9 - 0.5), Math.round(cy + Math.sin(a) * 2.9 - 0.5), 14),
+        S2,
+      );
+    }
+    // Red cone roof, resting on the parapet ring
+    [2.6, 2.0, 1.4, 0.7].forEach((r, i) => disc(v[2], cx, cy, 14 + i, r, r, R));
+  }
+  // Keep roof: stone eave, red pyramid, pole + banner
+  box(v[2], 13, 9, 14, 14, 12, 1, S2);
+  box(v[2], 14, 10, 15, 12, 10, 1, R);
+  box(v[2], 16, 12, 16, 8, 6, 1, R);
+  box(v[2], 18, 13, 17, 4, 3, 1, R);
+  box(v[2], 19, 14, 18, 1, 1, 3, D);
+  box(v[2], 20, 14, 20, 2, 1, 1, Y);
+
+  // Weathered-stone mottle: breaks up the masonry into varied pieces.
+  for (const map of [v[1], v[2]]) {
+    for (const [key, c] of map) {
+      if (c !== S1) continue;
+      const [x, y, z] = key.split(",").map(Number);
+      if ((x * 13 + y * 7 + z * 17) % 10 < 2) map.set(key, S2);
+    }
+  }
+
+  // Every brick gets ALL of its studs — stacking covers them naturally.
+  const stages = v.map((m) =>
     painterSort(
-      brickify(v).map((p) => ({
+      brickify(m).map((p) => ({
         ...p,
         studs: Array.from({ length: p.w * p.d }, (_, k) => [
           k % p.w,
@@ -65,6 +134,7 @@ function buildStages(): Part[][] {
       })),
     ),
   );
+  return { stages, pieces: stages.reduce((a, s) => a + s.length, 0) };
 }
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -81,7 +151,7 @@ export function HowIBuild() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [active, setActive] = useState(0);
   const [pinned, setPinned] = useState(true);
-  const stages = useMemo(buildStages, []);
+  const { stages, pieces } = useMemo(buildStages, []);
 
   useEffect(() => {
     const small = window.matchMedia("(max-width: 1023px)").matches;
@@ -212,7 +282,7 @@ export function HowIBuild() {
             </div>
             {pinned && (
               <p className="mt-3 font-mono text-xs uppercase tracking-widest text-lego-gray/60">
-                Scroll to assemble
+                Scroll to assemble · {pieces.toLocaleString()} pieces
               </p>
             )}
 
