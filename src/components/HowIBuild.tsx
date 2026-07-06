@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Part, Voxels, box, brickify, disc, drawPart, painterSort, project, vkey } from "@/lib/iso";
+import { Part, Voxels, box, brickify, disc, drawPart, painterSort, part, project, vkey } from "@/lib/iso";
 
 const S1 = "#a8adb2"; // castle stone, light
 const S2 = "#7d8288"; // castle stone, weathered
@@ -33,105 +33,147 @@ const PRINCIPLES = [
   },
 ];
 
-/** A full castle, one voxel map per assembly stage. */
+/**
+ * Falkenstein: an asymmetric crag castle. Stage 0 raises the rocky motte
+ * out of a moat; stage 1 builds the ward, keep, bergfried and great hall;
+ * stage 2 crowns it — machicolations, spires, a slope-built gabled roof,
+ * banners and a courtyard tree.
+ */
 function buildStages(): { stages: Part[][]; pieces: number } {
+  const TAN = "#d9c9a3";
+  const BLU = "#2f6ec4";
   const v: Voxels[] = [new Map(), new Map(), new Map()];
-  const TOWERS: Array<[number, number]> = [
-    [4.5, 4.5],
-    [38.5, 4.5],
-    [4.5, 28.5],
-    [38.5, 28.5],
+  const extras: Part[][] = [[], [], []];
+
+  // ── Stage 0 — grounds: moat, plank bridge, the crag ──
+  box(v[0], 0, 0, 0, 48, 36, 1, G);
+  box(v[0], 1, 1, 0, 46, 3, 1, BLU);
+  box(v[0], 1, 32, 0, 46, 3, 1, BLU);
+  box(v[0], 1, 4, 0, 3, 28, 1, BLU);
+  box(v[0], 44, 4, 0, 3, 28, 1, BLU);
+  box(v[0], 22, 29, 1, 4, 7, 1, WOOD); // bridge: ends on both banks
+  // The crag — stacked, shrinking rock ellipses
+  const crag: Array<[number, number]> = [
+    [20, 14], [18.6, 13], [17.2, 12], [15.8, 11], [14.6, 10.2],
   ];
+  crag.forEach(([rx, ry], i) => disc(v[0], 24, 17, 1 + i, rx, ry, D));
+  box(v[0], 22, 22, 5, 4, 6, 1, D); // ramp shelf toward the bridge
 
-  // ── Stage 0 — foundation: grounds + stone path to the gate ──
-  box(v[0], 0, 0, 0, 44, 34, 1, G);
-  box(v[0], 19, 26, 0, 6, 8, 1, D);
-
-  // ── Stage 1 — structure: curtain walls, towers, gatehouse, keep ──
-  box(v[1], 4, 4, 1, 36, 2, 7, S1); // back wall
-  box(v[1], 4, 28, 1, 15, 2, 7, S1); // front wall, left of gate
-  box(v[1], 25, 28, 1, 15, 2, 7, S1); // front wall, right of gate
-  box(v[1], 4, 6, 1, 2, 22, 7, S1); // west wall
-  box(v[1], 38, 6, 1, 2, 22, 7, S1); // east wall
-  for (const [cx, cy] of TOWERS) {
-    for (let z = 1; z <= 12; z++) disc(v[1], cx, cy, z, 3.2, 3.2, S1);
+  // ── Stage 1 — the ward on the crag ──
+  const wz = 6; // plateau level
+  box(v[1], 12, 8, wz, 24, 2, 5, S1); // north curtain
+  box(v[1], 12, 24, wz, 10, 2, 5, S1); // south, left of gate
+  box(v[1], 26, 24, wz, 10, 2, 5, S1); // south, right of gate
+  box(v[1], 12, 10, wz, 2, 14, 5, S1); // west
+  box(v[1], 34, 10, wz, 2, 14, 5, S1); // east
+  // Corner towers — deliberately unequal heights
+  const CTW: Array<[number, number, number]> = [
+    [12.5, 8.5, 16], [35.5, 8.5, 17], [12.5, 25.5, 14], [35.5, 25.5, 13],
+  ];
+  for (const [cx, cy, top] of CTW) {
+    for (let z = wz; z <= top; z++) disc(v[1], cx, cy, z, 2.6, 2.6, S1);
   }
-  // Gatehouse: two piers, and a lintel that RESTS on both pier tops.
-  box(v[1], 16, 26, 1, 3, 4, 7, S1);
-  box(v[1], 25, 26, 1, 3, 4, 7, S1);
-  box(v[1], 16, 28, 8, 12, 2, 2, S1);
-  box(v[1], 19, 29, 1, 6, 1, 7, WOOD); // gate doors, flush under the lintel
-  // Keep
-  box(v[1], 14, 10, 1, 12, 10, 13, S1);
-  // Windows & arrow slits live in the SAME map as their walls, so the
-  // bricker fits them flush into the masonry — no overlapping voxels.
-  for (const [x, z] of [
-    [16, 9], [23, 9], [16, 5], [23, 5], [19, 11], [20, 11],
-  ] as const) {
-    v[1].set(vkey(x, 19, z), K);
-  }
-  v[1].set(vkey(25, 13, 8), K);
-  v[1].set(vkey(25, 16, 8), K);
-  for (const [cx, cy] of TOWERS) {
-    v[1].set(vkey(Math.floor(cx), Math.round(cy + 2.5), 5), K);
-    v[1].set(vkey(Math.floor(cx), Math.round(cy + 2.5), 9), K);
-  }
-
-  // ── Stage 2 — details: crenellations, parapets, roofs, banner ──
-  for (let x = 4; x <= 39; x += 2) {
-    v[2].set(vkey(x, 4, 8), S2);
-    if (x <= 18 || x >= 25) v[2].set(vkey(x, 29, 8), S2);
-  }
-  for (let y = 6; y <= 27; y += 2) {
-    v[2].set(vkey(4, y, 8), S2);
-    v[2].set(vkey(39, y, 8), S2);
-  }
-  for (let x = 16; x <= 27; x += 2) v[2].set(vkey(x, 29, 10), S2); // lintel parapet
-  for (const [cx, cy] of TOWERS) {
-    // Parapet ring on the tower top, walkway hole in the middle
-    disc(v[2], cx, cy, 13, 3.4, 3.4, S1);
-    for (let x = Math.floor(cx - 4); x <= Math.ceil(cx + 4); x++) {
-      for (let y = Math.floor(cy - 4); y <= Math.ceil(cy + 4); y++) {
-        if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) < 2.0) v[2].delete(vkey(x, y, 13));
-      }
+  // Gatehouse: piers + load-bearing lintel + wooden gates
+  box(v[1], 19, 23, wz, 3, 3, 7, S1);
+  box(v[1], 26, 23, wz, 3, 3, 7, S1);
+  box(v[1], 19, 24, wz + 7, 10, 2, 2, S1);
+  box(v[1], 22, 25, wz, 4, 1, 6, WOOD);
+  // The keep, with tan quoins up its corners
+  box(v[1], 16, 11, wz, 9, 8, 14, S1);
+  for (let z = wz; z < wz + 14; z++) {
+    for (const [qx, qy] of [[16, 11], [24, 11], [16, 18], [24, 18]] as const) {
+      v[1].set(vkey(qx, qy, z), TAN);
     }
-    for (let k = 0; k < 360; k += 45) {
+  }
+  // Stair turret hugging the keep's corner, taller than the keep
+  for (let z = wz; z <= wz + 17; z++) disc(v[1], 25.5, 18.5, z, 1.7, 1.7, S1);
+  // Bergfried — the slender watchtower that owns the skyline
+  for (let z = wz; z <= wz + 19; z++) disc(v[1], 31.5, 12.5, z, 2.3, 2.3, S1);
+  // Great hall against the east wall
+  box(v[1], 27, 19, wz, 8, 6, 8, S1);
+  // Windows — flush dark cells in the visible faces
+  for (const [x, z] of [[18, 9], [21, 9], [18, 13], [21, 13], [18, 16], [21, 16]] as const) {
+    v[1].set(vkey(x, 18, z), K);
+    v[1].set(vkey(x, 18, z + 1), K);
+  }
+  for (const x of [28, 30, 32]) {
+    v[1].set(vkey(x, 24, 9), K);
+    v[1].set(vkey(x, 24, 10), K);
+  }
+  v[1].set(vkey(31, 14, 14), K); // bergfried slits
+  v[1].set(vkey(31, 14, 19), K);
+
+  // ── Stage 2 — the crown ──
+  // Wall crenellations
+  for (let x = 12; x <= 35; x += 2) {
+    v[2].set(vkey(x, 8, wz + 5), S2);
+    if (x <= 21 || x >= 26) v[2].set(vkey(x, 25, wz + 5), S2);
+  }
+  for (let y = 10; y <= 23; y += 2) {
+    v[2].set(vkey(12, y, wz + 5), S2);
+    v[2].set(vkey(35, y, wz + 5), S2);
+  }
+  for (let x = 19; x <= 28; x += 2) v[2].set(vkey(x, 25, wz + 9), S2);
+  // Tower crowns: machicolated overhang ring, merlons, then a spire
+  const crown = (cx: number, cy: number, top: number, r: number, roof: string, hSpire: number) => {
+    disc(v[2], cx, cy, top + 1, r + 0.6, r + 0.6, S1);
+    for (let k = 0; k < 360; k += 40) {
       const a = (k * Math.PI) / 180;
       v[2].set(
-        vkey(Math.round(cx + Math.cos(a) * 2.9 - 0.5), Math.round(cy + Math.sin(a) * 2.9 - 0.5), 14),
+        vkey(Math.round(cx + Math.cos(a) * (r + 0.3) - 0.5), Math.round(cy + Math.sin(a) * (r + 0.3) - 0.5), top + 2),
         S2,
       );
     }
-    // Red cone roof, resting on the parapet ring
-    [2.6, 2.0, 1.4, 0.7].forEach((r, i) => disc(v[2], cx, cy, 14 + i, r, r, R));
-  }
-  // Keep roof: stone eave, red pyramid, pole + banner
-  box(v[2], 13, 9, 14, 14, 12, 1, S2);
-  box(v[2], 14, 10, 15, 12, 10, 1, R);
-  box(v[2], 16, 12, 16, 8, 6, 1, R);
-  box(v[2], 18, 13, 17, 4, 3, 1, R);
-  box(v[2], 19, 14, 18, 1, 1, 3, D);
-  box(v[2], 20, 14, 20, 2, 1, 1, Y);
+    for (let i = 0; i < hSpire; i++) {
+      const rr = (r + 0.2) * (1 - (i + 1) / (hSpire + 1));
+      disc(v[2], cx, cy, top + 2 + i, Math.max(0.6, rr), Math.max(0.6, rr), roof);
+    }
+    extras[2].push(part("cone", roof, Math.floor(cx), Math.floor(cy), top + 2 + hSpire));
+    extras[2].push(part("cylinder", Y, Math.floor(cx), Math.floor(cy), top + 3 + hSpire, 1, 1, 1 / 3));
+  };
+  for (const [cx, cy, top] of CTW) crown(cx, cy, top, 2.6, R, 3);
+  crown(31.5, 12.5, wz + 19, 2.3, BLU, 4); // bergfried in blue
+  crown(25.5, 18.5, wz + 17, 1.7, R, 2); // stair turret
+  // Keep: eave + steep stepped pyramid + banner
+  box(v[2], 15, 10, wz + 14, 11, 10, 1, S2);
+  box(v[2], 16, 11, wz + 15, 9, 8, 1, R);
+  box(v[2], 17, 12, wz + 16, 7, 6, 1, R);
+  box(v[2], 18, 13, wz + 17, 5, 4, 1, R);
+  box(v[2], 19, 14, wz + 18, 3, 2, 1, R);
+  box(v[2], 20, 14, wz + 19, 1, 1, 3, D);
+  extras[2].push(part("plate", R, 21, 14, wz + 21, 2, 1));
+  // Great hall: gabled roof from real slope pieces
+  box(v[2], 27, 19, wz + 8, 8, 4, 1, R);
+  for (let x = 27; x < 35; x++) extras[2].push(part("slope", R, x, 23, wz + 8, 1, 1, 1, 1));
+  box(v[2], 27, 19, wz + 9, 8, 2, 1, R);
+  for (let x = 27; x < 35; x++) extras[2].push(part("slope", R, x, 21, wz + 9, 1, 1, 1, 1));
+  for (let x = 27; x < 35; x++) extras[2].push(part("tile", Y, x, 19, wz + 10, 1, 2));
+  // Courtyard tree
+  box(v[2], 28, 14, wz, 1, 1, 2, WOOD);
+  disc(v[2], 28.5, 14.5, wz + 2, 1.8, 1.8, G);
+  disc(v[2], 28.5, 14.5, wz + 3, 1.3, 1.3, G);
+  disc(v[2], 28.5, 14.5, wz + 4, 0.7, 0.7, G);
 
-  // Weathered-stone mottle: breaks up the masonry into varied pieces.
-  for (const map of [v[1], v[2]]) {
+  // Weathered mottle: rock heavier, masonry lighter
+  for (const [map, rate] of [[v[0], 3], [v[1], 2], [v[2], 2]] as const) {
     for (const [key, c] of map) {
-      if (c !== S1) continue;
+      if (c !== S1 && c !== D) continue;
       const [x, y, z] = key.split(",").map(Number);
-      if ((x * 13 + y * 7 + z * 17) % 10 < 2) map.set(key, S2);
+      if ((x * 13 + y * 7 + z * 17) % 10 < rate) map.set(key, c === D ? "#5d6470" : S2);
     }
   }
 
-  // Every brick gets ALL of its studs — stacking covers them naturally.
-  const stages = v.map((m) =>
+  const stages = v.map((m, i) =>
     painterSort(
-      brickify(m).map((p) => ({
-        ...p,
-        studs: Array.from({ length: p.w * p.d }, (_, k) => [
-          k % p.w,
-          Math.floor(k / p.w),
-        ]) as Array<[number, number]>,
-      })),
+      brickify(m)
+        .map((p) => ({
+          ...p,
+          studs: Array.from({ length: p.w * p.d }, (_, k) => [
+            k % p.w,
+            Math.floor(k / p.w),
+          ]) as Array<[number, number]>,
+        }))
+        .concat(extras[i]),
     ),
   );
   return { stages, pieces: stages.reduce((a, s) => a + s.length, 0) };
