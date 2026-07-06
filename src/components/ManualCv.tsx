@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Part, Voxels, box, brickify, drawPart, painterSort, part, project, vkey } from "@/lib/iso";
 
 /**
  * Mode wrapper for /cv: the normal CV renders by default; a toggle flips
@@ -137,6 +138,125 @@ const KEYFRAMES = `
   .mcv-anim { animation: none !important; }
 }
 `;
+
+/**
+ * Little LEGO Joosep, assembled across the CV steps: base+shoes, legs,
+ * torso, arms, head with face, hair, then graduation cap + a tiny french
+ * horn. One voxel group per step, rendered with the site's iso engine.
+ */
+function buildFigure(): Part[][] {
+  const D = "#4f5566", K2 = "#2a2440", JEANS = "#0a3463", SHIRT = "#00852b",
+    SKIN = "#f5c400", HAIR = "#582a12", YEL = "#f5c400";
+  const g: Voxels[] = Array.from({ length: 7 }, () => new Map());
+  const extras: Part[][] = Array.from({ length: 7 }, () => []);
+  // 1 — base plate + shoes
+  box(g[0], 0, 0, 0, 15, 6, 1, D);
+  box(g[0], 2, 2, 1, 2, 2, 1, K2);
+  box(g[0], 6, 2, 1, 2, 2, 1, K2);
+  // 2 — legs + hips
+  box(g[1], 2, 2, 2, 2, 2, 2, JEANS);
+  box(g[1], 6, 2, 2, 2, 2, 2, JEANS);
+  box(g[1], 2, 2, 4, 6, 2, 1, JEANS);
+  // 3 — torso
+  box(g[2], 1, 1, 5, 8, 4, 4, SHIRT);
+  // 4 — arms + hands (side-mounted, like real minifig shoulders)
+  box(g[3], 0, 1, 6, 1, 3, 3, SHIRT);
+  box(g[3], 9, 1, 6, 1, 3, 3, SHIRT);
+  box(g[3], 0, 1, 5, 1, 3, 1, SKIN);
+  box(g[3], 9, 1, 5, 1, 3, 1, SKIN);
+  // 5 — head with the face flush in the same map
+  box(g[4], 1, 1, 9, 8, 4, 4, SKIN);
+  g[4].set(vkey(3, 4, 11), K2);
+  g[4].set(vkey(6, 4, 11), K2);
+  g[4].set(vkey(4, 4, 10), K2);
+  g[4].set(vkey(5, 4, 10), K2);
+  // 6 — hair
+  box(g[5], 1, 1, 13, 8, 4, 1, HAIR);
+  // 7 — graduation cap + button, and a tiny horn on the base
+  box(g[6], 2, 1, 14, 6, 4, 1, K2);
+  extras[6].push(part("cylinder", YEL, 4, 2, 15, 1, 1, 1 / 3));
+  box(g[6], 12, 2, 1, 2, 2, 1, YEL);
+  box(g[6], 12, 2, 2, 1, 1, 2, YEL);
+  extras[6].push(part("cone", YEL, 13, 2, 2));
+  return g.map((m, i) =>
+    painterSort(
+      brickify(m)
+        .map((p) => ({
+          ...p,
+          studs: Array.from({ length: p.w * p.d }, (_, k) => [
+            k % p.w,
+            Math.floor(k / p.w),
+          ]) as Array<[number, number]>,
+        }))
+        .concat(extras[i]),
+    ),
+  );
+}
+
+const mcvEase = (t: number) => 1 - Math.pow(1 - t, 3);
+
+/** Canvas render of the figure up to `step`, new group dropping in. */
+function StepBuild({ step }: { step: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const groups = useMemo(buildFigure, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    const W = 300, H = 330;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = `${W}px`;
+    canvas.style.height = `${H}px`;
+
+    const all = groups.flat();
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const b of all) {
+      for (const [cx, cy] of [
+        [b.x, b.y], [b.x + b.w, b.y], [b.x, b.y + b.d], [b.x + b.w, b.y + b.d],
+      ]) {
+        for (const cz of [b.z, b.z + b.h]) {
+          const { px, py } = project(cx, cy, cz, 1);
+          minX = Math.min(minX, px); maxX = Math.max(maxX, px);
+          minY = Math.min(minY, py - 0.3); maxY = Math.max(maxY, py);
+        }
+      }
+    }
+    const s = Math.min((W * 0.92) / (maxX - minX), (H * 0.9) / (maxY - minY));
+    const ox = (W - (maxX - minX) * s) / 2 - minX * s;
+    const oy = (H - (maxY - minY) * s) / 2 - minY * s;
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const start = performance.now();
+    let raf = 0;
+    const frame = (now: number) => {
+      const elapsed = reduce ? 9999 : now - start;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      for (let gi = 0; gi <= step && gi < groups.length; gi++) {
+        const parts = groups[gi];
+        parts.forEach((b, i) => {
+          let t = 1;
+          if (gi === step) {
+            t = mcvEase(Math.max(0, Math.min(1, (elapsed - i * 55) / 420)));
+            if (t <= 0.01) return;
+          }
+          const { px, py } = project(b.x, b.y, b.z, s);
+          drawPart(ctx, b, px + ox, py + oy - 140 * (1 - t), s, Math.min(1, t * 1.5));
+        });
+      }
+      if (!reduce && elapsed < groups[Math.min(step, groups.length - 1)].length * 55 + 500) {
+        raf = requestAnimationFrame(frame);
+      }
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, [groups, step]);
+
+  return <canvas ref={canvasRef} aria-hidden="true" />;
+}
 
 function Brick({
   piece,
@@ -313,20 +433,7 @@ function ManualCv() {
             </div>
             {/* The growing build: new bricks rain in and bounce */}
             <div className="flex flex-col items-center justify-end">
-              <div className="flex flex-col-reverse items-center gap-1">
-                {STEPS.slice(0, stepIndex + 1).flatMap((s, si) =>
-                  s.pieces.map((p, pi) => (
-                    <Brick
-                      key={`${si}-${p.label}`}
-                      piece={p}
-                      dim={si < stepIndex}
-                      drop={si === stepIndex}
-                      delay={400 + pi * 220}
-                      glow={si === stepIndex}
-                    />
-                  )),
-                )}
-              </div>
+              <StepBuild step={stepIndex} />
               <p className="mt-3 font-mono text-[10px] uppercase tracking-widest text-[#1a1a2e]/40">
                 The build so far · {piecesSoFar}/{totalPieces} pcs
               </p>
