@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PrintButton } from "@/components/PrintButton";
+import { CvView } from "@/components/ManualCv";
 import { SEEKING_JOB } from "@/lib/flags";
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function CV() {
         <PrintButton />
       </div>
 
+      <CvView cv={
       <div className="cv-page mx-auto max-w-[800px] px-8 py-16 font-sans text-[#1a1a2e]">
         {/* Header */}
         <header className="mb-4 border-b-2 border-[#e3000b] pb-4">
@@ -238,6 +240,7 @@ export default function CV() {
           </div>
         </section>
       </div>
+      } />
     </>
   );
 }
